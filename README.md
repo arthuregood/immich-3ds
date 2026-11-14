@@ -63,7 +63,21 @@ makerom -f cia -o immich-3ds.cia -elf immich-3ds.elf -icon immich-3ds.smdh \
 
 ## Configurar
 
-Na primeira execução, aperte **SELECT** e preencha pelo teclado do 3DS:
+### Opção A — `.env` no build (sem digitar nada no 3DS)
+
+```sh
+cp .env.example .env
+$EDITOR .env        # IMMICH_SERVER, IMMICH_API_KEY, IMMICH_TZ
+./build.sh          # os valores entram compilados no binário
+```
+
+O cabeçalho da tela mostra `(build)` quando a config veio daí. O `.env` está no `.gitignore`.
+
+⚠️ A chave fica **dentro** do `.cia` gerado: use uma API key dedicada a este app e não distribua esse binário.
+
+### Opção B — direto no 3DS
+
+Sem `.env`, o app abre pedindo os dados. Aperte **SELECT** e preencha pelo teclado do 3DS:
 
 | Campo | Exemplo |
 |---|---|
@@ -71,7 +85,7 @@ Na primeira execução, aperte **SELECT** e preencha pelo teclado do 3DS:
 | API key | criada em *Account Settings → API Keys* no Immich |
 | Fuso horário | `-03:00` |
 
-Fica salvo em `sdmc:/immich-3ds/config.txt`.
+Fica salvo em `sdmc:/immich-3ds/config.txt`, que tem prioridade sobre o `.env`: é assim que você troca de servidor sem recompilar.
 
 ### HTTPS
 
@@ -98,7 +112,7 @@ O app fala TLS 1.2 com o mbedtls embarcado — não usa a pilha TLS do sistema (
 - Lê apenas `sdmc:/DCIM` (fotos da câmera e de jogos que salvam ali).
 - `.MPO` (foto 3D) sobe como JPEG: o Immich mostra o primeiro frame e preserva o original.
 - TLS 1.2 é o teto do mbedtls 2.x — um servidor exigindo só TLS 1.3 não vai conectar.
-- A API key fica em texto plano no SD. Use uma key dedicada a este app, para poder revogar sem afetar os outros clientes.
+- A API key fica em texto plano no SD (ou compilada no binário, se você usou `.env`). Use uma key dedicada a este app, para poder revogar sem afetar os outros clientes.
 
 ## Testes
 

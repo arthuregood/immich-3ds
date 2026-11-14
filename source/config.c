@@ -1,4 +1,5 @@
 #include "config.h"
+#include "config_build.h"
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
@@ -24,31 +25,40 @@ static bool file_exists(const char *p)
     return stat(p, &st) == 0;
 }
 
-void config_defaults(Config *c)
+static void config_defaults(Config *c)
 {
     memset(c, 0, sizeof *c);
-    snprintf(c->tz, sizeof c->tz, "-03:00");
+    snprintf(c->server, sizeof c->server, "%s", BUILD_SERVER);
+    snprintf(c->apikey, sizeof c->apikey, "%s", BUILD_APIKEY);
+    snprintf(c->tz,     sizeof c->tz,     "%s", BUILD_TZ[0] ? BUILD_TZ : "-03:00");
+}
+
+bool config_has_defaults(void)
+{
+    return BUILD_SERVER[0] && BUILD_APIKEY[0];
 }
 
 bool config_load(Config *c)
 {
     config_defaults(c);
+
     FILE *f = fopen(CONFIG_FILE, "r");
-    if (!f) return false;
-    char line[420];
-    while (fgets(line, sizeof line, f)) {
-        trim(line);
-        if (line[0] == '#' || !line[0]) continue;
-        char *eq = strchr(line, '=');
-        if (!eq) continue;
-        *eq = 0;
-        char *k = line, *v = eq + 1;
-        trim(k); trim(v);
-        if      (!strcasecmp(k, "server")) snprintf(c->server, sizeof c->server, "%s", v);
-        else if (!strcasecmp(k, "apikey")) snprintf(c->apikey, sizeof c->apikey, "%s", v);
-        else if (!strcasecmp(k, "tz"))     snprintf(c->tz,     sizeof c->tz,     "%s", v);
+    if (f) {
+        char line[420];
+        while (fgets(line, sizeof line, f)) {
+            trim(line);
+            if (line[0] == '#' || !line[0]) continue;
+            char *eq = strchr(line, '=');
+            if (!eq) continue;
+            *eq = 0;
+            char *k = line, *v = eq + 1;
+            trim(k); trim(v);
+            if      (!strcasecmp(k, "server")) snprintf(c->server, sizeof c->server, "%s", v);
+            else if (!strcasecmp(k, "apikey")) snprintf(c->apikey, sizeof c->apikey, "%s", v);
+            else if (!strcasecmp(k, "tz"))     snprintf(c->tz,     sizeof c->tz,     "%s", v);
+        }
+        fclose(f);
     }
-    fclose(f);
 
     // tira a barra final do server para concatenar "/api/..." sem "//"
     size_t sl = strlen(c->server);

@@ -13,3 +13,6 @@ typedef struct {
 bool config_load(Config *c);
 bool config_save(const Config *c);
 void config_setup(Config *c);   // teclado do sistema (swkbd)
+
+// true quando o build embutiu servidor + chave via .env
+bool config_has_defaults(void);

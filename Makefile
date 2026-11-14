@@ -61,6 +61,7 @@ export _3DSXFLAGS += --smdh=$(CURDIR)/$(TARGET).smdh
 .PHONY: all clean
 
 all: $(BUILD)
+	@sh tools/gen_build_config.sh "$(CURDIR)/.env" "$(CURDIR)/source/config_build.h"
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 $(BUILD):

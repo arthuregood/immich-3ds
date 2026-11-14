@@ -9,5 +9,7 @@ build/
 
 # nada de credenciais no repo
 config.txt
+.env
+source/config_build.h
 *.local
 tests/data/

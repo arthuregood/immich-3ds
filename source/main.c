@@ -31,7 +31,8 @@ static void draw_bottom(const char *msg)
 {
     consoleSelect(&bottomScreen);
     printf("\x1b[2J");
-    printf("\x1b[1;1H %s\n", host_of(cfg.server[0] ? cfg.server : "(sem servidor)"));
+    printf("\x1b[1;1H %s%s\n", host_of(cfg.server[0] ? cfg.server : "(sem servidor)"),
+           config_has_defaults() ? " \x1b[36m(build)\x1b[0m" : "");
     printf("\n %d fotos  |  %d marcadas\n", nphotos, dcim_marked(photos, nphotos));
     if (!cfg.verify) printf("\n \x1b[33mTLS sem verificacao\x1b[0m\n (ca.pem ausente)");
     printf("\n\n %s\n", msg ? msg : "");
