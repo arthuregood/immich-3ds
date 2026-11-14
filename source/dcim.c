@@ -39,9 +39,12 @@ static int scan_dir(const char *dirpath, Photo *out, int n, int max)
     return n;
 }
 
+// por data do EXIF (string "YYYY:MM:DD HH:MM:SS" ordena lexicograficamente = cronologico)
 static int cmp_photo(const void *a, const void *b)
 {
-    return strcmp(((const Photo *)a)->path, ((const Photo *)b)->path);
+    const Photo *x = (const Photo *)a, *y = (const Photo *)b;
+    int c = strcmp(x->datetime, y->datetime);
+    return c ? c : strcmp(x->name, y->name);
 }
 
 int dcim_scan(Photo *out, int max)
@@ -61,7 +64,7 @@ int dcim_scan(Photo *out, int max)
     }
     closedir(d);
 
-    qsort(out, n, sizeof *out, cmp_photo);   // o 3DS devolve ordem arbitraria
+    qsort(out, n, sizeof *out, cmp_photo);   // agrupa por dia na galeria
     return n;
 }
 

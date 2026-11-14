@@ -98,43 +98,57 @@ done:
     return ok;
 }
 
-void thumb_blit_bgr(const uint8_t *rgb, int w, int h,
-                    uint8_t *fb, int stride, int dx, int dy, int fbw, int fbh)
+//---------------------------------------------------------------------------------
+void fb_px(uint8_t *fb, int bpp, int x, int y, int scr_w, int scr_h,
+           uint8_t r, uint8_t g, uint8_t b)
 {
-    for (int y = 0; y < h; y++) {
-        int fy = dy + y;
-        if (fy < 0 || fy >= fbh) continue;
-        uint8_t *drow = fb + (size_t)fy * stride;
-        const uint8_t *srow = rgb + (size_t)y * w * 3;
-        for (int x = 0; x < w; x++) {
-            int fx = dx + x;
-            if (fx < 0 || fx >= fbw) continue;
-            drow[fx * 3 + 0] = srow[x * 3 + 2];   // B
-            drow[fx * 3 + 1] = srow[x * 3 + 1];   // G
-            drow[fx * 3 + 2] = srow[x * 3 + 0];   // R
+    if (x < 0 || x >= scr_w || y < 0 || y >= scr_h) return;
+    uint8_t *p = fb + (size_t)(x * FB_ROW_PX + (FB_ROW_PX - 1 - y)) * bpp;
+    switch (bpp) {
+        case 3:                                   // BGR8
+            p[0] = b; p[1] = g; p[2] = r;
+            break;
+        case 4:                                   // BGR8A
+            p[0] = b; p[1] = g; p[2] = r; p[3] = 0xFF;
+            break;
+        default: {                                // 565 / 5A1 / RGBA4
+            uint16_t c = (uint16_t)(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
+            memcpy(p, &c, sizeof c);
+            break;
         }
     }
 }
 
-static void px(uint8_t *fb, int stride, int x, int y, int fbw, int fbh,
-               uint8_t r, uint8_t g, uint8_t b)
+void thumb_blit(const uint8_t *rgb, int w, int h,
+                uint8_t *fb, int bpp, int dx, int dy, int scr_w, int scr_h)
 {
-    if (x < 0 || x >= fbw || y < 0 || y >= fbh) return;
-    uint8_t *p = fb + (size_t)y * stride + x * 3;
-    p[0] = b; p[1] = g; p[2] = r;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            const uint8_t *s = rgb + ((size_t)y * w + x) * 3;
+            fb_px(fb, bpp, dx + x, dy + y, scr_w, scr_h, s[0], s[1], s[2]);
+        }
+    }
 }
 
-void thumb_border(uint8_t *fb, int stride, int dx, int dy, int w, int h, int t,
-                  int fbw, int fbh, uint8_t r, uint8_t g, uint8_t b)
+void thumb_fill(uint8_t *fb, int bpp, int dx, int dy, int w, int h,
+                int scr_w, int scr_h, uint8_t r, uint8_t g, uint8_t b)
+{
+    for (int y = dy; y < dy + h; y++)
+        for (int x = dx; x < dx + w; x++)
+            fb_px(fb, bpp, x, y, scr_w, scr_h, r, g, b);
+}
+
+void thumb_border(uint8_t *fb, int bpp, int dx, int dy, int w, int h, int t,
+                  int scr_w, int scr_h, uint8_t r, uint8_t g, uint8_t b)
 {
     for (int i = 0; i < t; i++) {
         for (int x = dx - i; x < dx + w + i; x++) {
-            px(fb, stride, x, dy - i, fbw, fbh, r, g, b);
-            px(fb, stride, x, dy + h - 1 + i, fbw, fbh, r, g, b);
+            fb_px(fb, bpp, x, dy - i, scr_w, scr_h, r, g, b);
+            fb_px(fb, bpp, x, dy + h - 1 + i, scr_w, scr_h, r, g, b);
         }
         for (int y = dy - i; y < dy + h + i; y++) {
-            px(fb, stride, dx - i, y, fbw, fbh, r, g, b);
-            px(fb, stride, dx + w - 1 + i, y, fbw, fbh, r, g, b);
+            fb_px(fb, bpp, dx - i, y, scr_w, scr_h, r, g, b);
+            fb_px(fb, bpp, dx + w - 1 + i, y, scr_w, scr_h, r, g, b);
         }
     }
 }
