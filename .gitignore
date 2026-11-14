@@ -1,0 +1,13 @@
+build/
+.tools/
+*.elf
+*.3dsx
+*.smdh
+*.cia
+*.map
+*.d
+
+# nada de credenciais no repo
+config.txt
+*.local
+tests/data/

@@ -1,0 +1,117 @@
+# immich-3ds
+
+Envia as fotos do Nintendo 3DS direto para o seu servidor [Immich](https://immich.app) — sem PC no meio, sem cartão SD na mão.
+
+Um app de homebrew (`.cia` / `.3dsx`) que lê `sdmc:/DCIM`, mostra as fotos na tela do 3DS, e sobe as marcadas para o Immich usando a API oficial.
+
+```
+ 3DS  ──POST /api/assets──▶  Immich  ──▶  app do iPhone/Android (backup normal)
+```
+
+## Por que não AirDrop
+
+AirDrop não é possível no 3DS, e não é questão de criptografia: a descoberta roda sobre **AWDL**, um protocolo de rádio que exige monitor mode e injeção de frames 802.11 — coisas que o firmware fechado do 3DS não expõe, e que o menu do iPhone só aceita de quem fala AWDL. Reimplementações abertas como [OpenDrop](https://github.com/seemoo-lab/opendrop) e [OWL](https://github.com/seemoo-lab/owl) só existem em placas Wi-Fi com monitor mode ativo.
+
+O caminho que funciona é o Immich: o 3DS sobe as fotos, e o iPhone as vê pelo app do Immich. O "vice-versa" já vem de graça.
+
+## Status
+
+- ✅ Envio das fotos do SD para o Immich (`.cia` e `.3dsx` compilando)
+- ⬜ Navegar a biblioteca do Immich no 3DS e baixar para o SD
+- ⬜ Seleção múltipla por data, álbum por origem
+
+## Como funciona
+
+1. Varre `sdmc:/DCIM/*/` procurando `.JPG` e `.MPO`
+2. Lê o `DateTime` do EXIF de cada arquivo (o relógio do 3DS costuma estar errado; o EXIF é a fonte confiável)
+3. `POST /api/assets` multipart com `assetData` + `fileCreatedAt` + `fileModifiedAt` + `filename`, autenticado por `x-api-key`
+
+O upload é feito em streaming direto do SD (`curl_mime`), então não carrega a foto na RAM.
+
+## Compilar
+
+### Com Docker (não precisa instalar nada)
+
+```sh
+./build.sh
+# gera immich-3ds.cia e immich-3ds.3dsx
+```
+
+O script compila no container `devkitpro/devkitarm` e monta o `.cia` com o makerom num `ubuntu:24.04` (a imagem do devkitpro tem glibc antiga demais pro makerom atual). Em Mac com Apple Silicon usa `--platform linux/amd64`.
+
+### Com devkitPro instalado
+
+```sh
+export DEVKITARM=/opt/devkitpro/devkitARM
+export DEVKITPRO=/opt/devkitpro
+make -j$(nproc)
+```
+
+Pacotes necessários: `3ds-dev` (libctru), `3ds-curl`, `3ds-mbedtls`, `3ds-zlib`.
+
+Depois, o `.cia`:
+
+```sh
+makerom -f cia -o immich-3ds.cia -elf immich-3ds.elf -icon immich-3ds.smdh \
+        -desc app:2 -rsf app.rsf -target t
+```
+
+## Instalar
+
+- **`.cia`**: copie para o SD (ex: `sdmc:/cias/`) e instale com o **FBI**. Aparece no menu inicial.
+- **`.3dsx`**: copie para `sdmc:/3ds/immich-3ds/` e abra pelo Homebrew Launcher.
+
+## Configurar
+
+Na primeira execução, aperte **SELECT** e preencha pelo teclado do 3DS:
+
+| Campo | Exemplo |
+|---|---|
+| Servidor | `http://192.168.0.10:2283` |
+| API key | criada em *Account Settings → API Keys* no Immich |
+| Fuso horário | `-03:00` |
+
+Fica salvo em `sdmc:/immich-3ds/config.txt`.
+
+### HTTPS
+
+O app fala TLS 1.2 com o mbedtls embarcado — não usa a pilha TLS do sistema (que para no TLS 1.1).
+
+- **HTTP na rede local**: funciona sem configurar nada.
+- **HTTPS**: coloque a CA em `sdmc:/immich-3ds/ca.pem` (ex: `ISRG Root X1` se o seu Immich usa Let's Encrypt). Se o arquivo não existir, o app conecta **sem verificar o certificado** e mostra um aviso amarelo na tela.
+
+## Teclas
+
+| Tecla | Ação |
+|---|---|
+| D-pad ↑ ↓ ← → | navegar na lista |
+| A | marcar / desmarcar |
+| Y | marcar todas |
+| X | limpar marcação |
+| START | enviar marcadas |
+| SELECT | configurar |
+| B | sair |
+
+## Limitações conhecidas
+
+- Só **envia**; baixar do Immich para o 3DS ainda não existe.
+- Lê apenas `sdmc:/DCIM` (fotos da câmera e de jogos que salvam ali).
+- `.MPO` (foto 3D) sobe como JPEG: o Immich mostra o primeiro frame e preserva o original.
+- TLS 1.2 é o teto do mbedtls 2.x — um servidor exigindo só TLS 1.3 não vai conectar.
+- A API key fica em texto plano no SD. Use uma key dedicada a este app, para poder revogar sem afetar os outros clientes.
+
+## Testes
+
+A lógica pura (parser EXIF, formatação de data) roda no host:
+
+```sh
+./tests/run.sh
+```
+
+## Créditos
+
+[devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) + [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/), [makerom](https://github.com/3DSGuy/Project_CTR), e a equipe do [Immich](https://immich.app) pela API.
+
+## Licença
+
+MIT — veja [LICENSE](LICENSE).

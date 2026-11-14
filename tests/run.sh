@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Roda os testes de logica pura no host (sem devkitPro, sem 3DS).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+python3 tests/make_fixtures.py
+cc -std=c11 -Wall -Wextra -O1 -Isource -o /tmp/test_exif tests/test_exif.c source/exif.c
+/tmp/test_exif

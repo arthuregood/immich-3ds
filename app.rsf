@@ -1,0 +1,18 @@
+BasicInfo:
+  Title       : Immich 3DS
+  ProductCode : CTR-H-IMM3
+  Logo        : Nintendo
+
+TitleInfo:
+  Category    : Application
+  UniqueId    : 0xFF3F0
+
+Option:
+  UseOnSD         : true
+  FreeProductCode : true
+  EnableCompress  : true
+  MediaFootPadding: false
+  EnableCrypt     : false
+
+SystemControlInfo:
+  StackSize : 0x10000
