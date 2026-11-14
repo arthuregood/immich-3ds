@@ -28,7 +28,7 @@ ASFLAGS :=  -g $(ARCH)
 LDFLAGS :=  -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 # ordem importa: curl depende de mbedtls/zlib, tudo depende de libctru
-LIBS    :=  -lcurl -lmbedtls -lmbedx509 -lmbedcrypto -lz -lctru -lm
+LIBS    :=  -lcurl -lmbedtls -lmbedx509 -lmbedcrypto -ljpeg -lz -lctru -lm
 
 LIBDIRS :=  $(CTRULIB) $(PORTLIBS)
 

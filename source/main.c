@@ -8,10 +8,19 @@
 #include "dcim.h"
 #include "exif.h"
 #include "immich.h"
+#include "thumb.h"
 
-#define MAX_PHOTOS 512
-#define LIST_ROWS  21
+#define MAX_PHOTOS  512
+#define LIST_ROWS   21
 #define MAX_RESULTS 96
+
+// grade de thumbnails na tela de baixo: 3 colunas x 2 linhas
+#define GRID_COLS 3
+#define GRID_ROWS 2
+#define GRID_N    (GRID_COLS * GRID_ROWS)
+#define TH_W      106
+#define TH_H      80
+#define GRID_Y    48                     // y inicial da grade (6 linhas de texto acima)
 
 static PrintConsole topScreen, bottomScreen;
 static Config cfg;
@@ -21,30 +30,84 @@ static char results[MAX_RESULTS][78];
 static int nresults;
 static volatile int g_pct = -1;
 
+static uint8_t thumb_px[GRID_N][TH_W * TH_H * 3];
+static int thumb_idx[GRID_N];            // qual foto esta em cada celula (-1 = vazia)
+
+// libctru guarda o framebuffer no consoleInit; com double buffering precisamos
+// reapontar a cada swap, senao o console escreve no buffer que nao esta na tela.
+static void sync_console_fb(void)
+{
+    topScreen.frameBuffer    = (u16 *)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+    bottomScreen.frameBuffer = (u16 *)gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+}
+
 static const char *host_of(const char *server)
 {
     const char *p = strstr(server, "://");
     return p ? p + 3 : server;
 }
 
+// Quais fotos mostrar: as marcadas (o lote que vai subir) ou, se nada marcado,
+// as proximas do cursor.
+static int grid_indices(int *idx)
+{
+    int n = 0;
+    for (int i = 0; i < nphotos && n < GRID_N; i++) if (photos[i].marked) idx[n++] = i;
+    if (n) return n;
+    for (int i = cursor; i < nphotos && n < GRID_N; i++) idx[n++] = i;
+    return n;
+}
+
+static void draw_thumbs(void)
+{
+    int idx[GRID_N];
+    int n = grid_indices(idx);
+
+    u16 fw = 0, fh = 0;
+    uint8_t *fb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, &fw, &fh);
+    if (!fb || !fw || !fh) return;
+
+    for (int k = 0; k < GRID_N; k++) {
+        int dx = (k % GRID_COLS) * TH_W;
+        int dy = GRID_Y + (k / GRID_COLS) * TH_H;
+
+        if (k >= n) {
+            // celula vazia: apaga o que sobrou da selecao anterior
+            if (thumb_idx[k] != -1) {
+                memset(thumb_px[k], 0x10, sizeof thumb_px[k]);
+                thumb_idx[k] = -1;
+            }
+        } else if (thumb_idx[k] != idx[k]) {
+            thumb_decode_rgb(photos[idx[k]].path, TH_W, TH_H, thumb_px[k]);
+            thumb_idx[k] = idx[k];
+        }
+        thumb_blit_bgr(thumb_px[k], TH_W, TH_H, fb, fw * 3, dx, dy, fw, fh);
+
+        if (k < n && idx[k] == cursor)
+            thumb_border(fb, fw * 3, dx, dy, TH_W, TH_H, 2, fw, fh, 255, 255, 255);
+    }
+}
+
 static void draw_bottom(const char *msg)
 {
     consoleSelect(&bottomScreen);
-    printf("\x1b[2J");
-    printf("\x1b[1;1H %s%s\n", host_of(cfg.server[0] ? cfg.server : "(sem servidor)"),
-           config_has_defaults() ? " \x1b[36m(build)\x1b[0m" : "");
-    printf("\n %d fotos  |  %d marcadas\n", nphotos, dcim_marked(photos, nphotos));
-    if (!cfg.verify) printf("\n \x1b[33mTLS sem verificacao\x1b[0m\n (ca.pem ausente)");
-    printf("\n\n %s\n", msg ? msg : "");
-    printf("\n \x1b[30;47m START \x1b[0m enviar  \x1b[30;47m SELECT \x1b[0m config");
+    consoleClear();                       // 40x30 a tela toda: por isso o texto fica no topo
+    printf(" %s%s\n", host_of(cfg.server[0] ? cfg.server : "(sem servidor)"),
+           config_has_defaults() ? " (build)" : "");
+    printf(" %d fotos | %d marcadas\n", nphotos, dcim_marked(photos, nphotos));
+    // so 6 linhas: abaixo disso comeca a grade de thumbnails
+    printf(" TLS %s\n", cfg.verify ? "verificado" : "\x1b[33msem verificacao\x1b[0m");
+    printf(" %s\n", msg ? msg : "");
+    printf(" A marca  START envia  SELECT config");
+    printf("\n");
 }
 
 static void draw_list(const char *msg)
 {
     consoleSelect(&topScreen);
-    printf("\x1b[2J\x1b[1;1H");
+    consoleClear();
     printf(" Immich 3DS  -  %d/%d fotos\n", dcim_marked(photos, nphotos), nphotos);
-    printf(" -------------------------------------------------- \n");
+    printf(" --------------------------------------------------\n");
     for (int i = scroll; i < nphotos && i < scroll + LIST_ROWS; i++) {
         char dt[24];
         exif_to_short(photos[i].datetime, dt, sizeof dt);
@@ -52,9 +115,10 @@ static void draw_list(const char *msg)
                i == cursor ? '>' : ' ', photos[i].marked ? 'x' : ' ',
                photos[i].name, photos[i].size / 1024, dt);
     }
-    printf(" -------------------------------------------------- \n");
-    printf(" A marca  Y todas  X limpa  START envia  B sai\n");
+    printf(" --------------------------------------------------\n");
+    printf(" A marca  Y todas  X limpa  B sai\n");
     draw_bottom(msg);
+    draw_thumbs();
 }
 
 static void on_progress(double f)
@@ -67,9 +131,10 @@ static void on_progress(double f)
     memset(bar, ' ', 40);
     bar[40] = 0;
     for (int i = 0; i < fill; i++) bar[i] = '#';
-    printf("\x1b[3;1H [%s] %3d%%", bar, pct);
+    printf("\x1b[4;1H [%s] %3d%%", bar, pct);
     gfxFlushBuffers();
     gfxSwapBuffers();
+    sync_console_fb();
 }
 
 static void upload_marked(void)
@@ -84,9 +149,8 @@ static void upload_marked(void)
         n++;
 
         consoleSelect(&topScreen);
-        printf("\x1b[2J\x1b[1;1H");
-        printf(" Enviando %d/%d\n %s\n", n, total, photos[i].name);
-        printf("\n\n");
+        consoleClear();
+        printf(" Enviando %d/%d\n %s\n\n", n, total, photos[i].name);
         g_pct = -1;
         on_progress(0);
 
@@ -108,10 +172,11 @@ static void upload_marked(void)
         for (int k = (nresults > 8 ? nresults - 8 : 0); k < nresults; k++) printf(" %s\n", results[k]);
         gfxFlushBuffers();
         gfxSwapBuffers();
+        sync_console_fb();
     }
 
     char msg[64];
-    snprintf(msg, sizeof msg, "%d enviadas, %d repetidas, %d falharam", ok, dup, fail);
+    snprintf(msg, sizeof msg, "%d enviadas, %d repetidas, %d falhas", ok, dup, fail);
     draw_list(msg);
 }
 
@@ -122,12 +187,22 @@ int main(int argc, char **argv)
     gfxInitDefault();
     consoleInit(GFX_TOP, &topScreen);
     consoleInit(GFX_BOTTOM, &bottomScreen);
+    sync_console_fb();
+
+    // limpa os dois framebuffers uma vez: a grade de thumbnails nao cobre a tela toda
+    for (int scr = 0; scr <= 1; scr++) {
+        u16 fw = 0, fh = 0;
+        uint8_t *fb = gfxGetFramebuffer((gfxScreen_t)scr, GFX_LEFT, &fw, &fh);
+        if (fb && fw && fh) memset(fb, 0, (size_t)fw * fh * 3);
+    }
+
 
     socInit((u32 *)memalign(0x1000, 0x40000), 0x40000);
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     config_load(&cfg);
     nphotos = dcim_scan(photos, MAX_PHOTOS);
+    for (int i = 0; i < GRID_N; i++) { thumb_idx[i] = -1; memset(thumb_px[i], 0x10, sizeof thumb_px[i]); }
 
     const char *msg = NULL;
     if (!cfg.server[0] || !cfg.apikey[0]) {
@@ -156,6 +231,7 @@ int main(int argc, char **argv)
             int n = dcim_scan(photos, MAX_PHOTOS);
             if (n) nphotos = n;
             cursor = scroll = 0;
+            for (int i = 0; i < GRID_N; i++) thumb_idx[i] = -1;
             msg = "config salva";
         }
         if (nphotos) {
@@ -178,6 +254,7 @@ int main(int argc, char **argv)
         draw_list(msg);
         gfxFlushBuffers();
         gfxSwapBuffers();
+        sync_console_fb();
         gspWaitForVBlank();
     }
 

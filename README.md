@@ -17,6 +17,7 @@ O caminho que funciona é o Immich: o 3DS sobe as fotos, e o iPhone as vê pelo 
 ## Status
 
 - ✅ Envio das fotos do SD para o Immich (`.cia` e `.3dsx` compilando)
+- ✅ Grade de thumbnails na tela de baixo: o lote marcado (ou a vizinhança do cursor), com moldura branca no item selecionado
 - ⬜ Navegar a biblioteca do Immich no 3DS e baixar para o SD
 - ⬜ Seleção múltipla por data, álbum por origem
 
@@ -27,6 +28,8 @@ O caminho que funciona é o Immich: o 3DS sobe as fotos, e o iPhone as vê pelo 
 3. `POST /api/assets` multipart com `assetData` + `fileCreatedAt` + `fileModifiedAt` + `filename`, autenticado por `x-api-key`
 
 O upload é feito em streaming direto do SD (`curl_mime`), então não carrega a foto na RAM.
+
+A grade da tela de baixo decodifica os JPEG com `libjpeg-turbo` em escala reduzida (1/4 via DCT scaling, não 640x480 inteiro) e guarda 6 thumbs em cache de 106x80.
 
 ## Compilar
 
@@ -99,7 +102,7 @@ O app fala TLS 1.2 com o mbedtls embarcado — não usa a pilha TLS do sistema (
 | Tecla | Ação |
 |---|---|
 | D-pad ↑ ↓ ← → | navegar na lista |
-| A | marcar / desmarcar |
+| A | marcar / desmarcar (a grade mostra as marcadas) |
 | Y | marcar todas |
 | X | limpar marcação |
 | START | enviar marcadas |
