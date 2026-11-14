@@ -24,7 +24,8 @@ fi
 # makerom 0.19 precisa de glibc >= 2.38, entao roda num ubuntu 24.04
 docker run --rm $PLATFORM "${USERFLAG[@]}" -v "$PWD":/work -w /work ubuntu:24.04 \
   bash -c 'chmod +x .tools/makerom && .tools/makerom -f cia -o immich-3ds.cia \
-    -elf immich-3ds.elf -icon immich-3ds.smdh -desc app:2 -rsf app.rsf -target t'
+    -elf immich-3ds.elf -icon immich-3ds.smdh -banner meta/banner.bnr \
+    -desc app:2 -rsf app.rsf -target t'
 
 echo
 echo "ok:"

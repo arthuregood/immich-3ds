@@ -17,7 +17,9 @@ O caminho que funciona é o Immich: o 3DS sobe as fotos, e o iPhone as vê pelo 
 ## Status
 
 - ✅ Envio das fotos do SD para o Immich (`.cia` e `.3dsx` compilando)
-- ✅ Grade de thumbnails na tela de baixo: o lote marcado (ou a vizinhança do cursor), com moldura branca no item selecionado
+- ✅ Galeria de miniaturas por data na tela de baixo, foto inteira na de cima
+- ✅ Menu de acoes (enviar esta / enviar todas do dia) e popup de progresso
+- ✅ Banner e icone proprios no menu inicial
 - ⬜ Navegar a biblioteca do Immich no 3DS e baixar para o SD
 - ⬜ Seleção múltipla por data, álbum por origem
 
@@ -116,6 +118,26 @@ O app fala TLS 1.2 com o mbedtls embarcado — não usa a pilha TLS do sistema (
 - `.MPO` (foto 3D) sobe como JPEG: o Immich mostra o primeiro frame e preserva o original.
 - TLS 1.2 é o teto do mbedtls 2.x — um servidor exigindo só TLS 1.3 não vai conectar.
 - A API key fica em texto plano no SD (ou compilada no binário, se você usou `.env`). Use uma key dedicada a este app, para poder revogar sem afetar os outros clientes.
+
+## Icone e banner
+
+O menu inicial mostra o icone do app (SMDH) e, ao selecionar, um banner estatico na tela
+de cima. Nao ha modelo 3D: isso exige um banner CGfx/CWAV que o homebrew nao usa — o
+banner aqui e uma imagem 256x128.
+
+Os arquivos ficam em `meta/` e ja estao versionados (`banner.bnr` pronto), entao o build
+nao precisa de ferramenta extra. Para regerar depois de trocar `banner.png`:
+
+```sh
+bannertool makebanner -i meta/banner.png -a meta/silence.wav -o meta/banner.bnr
+```
+
+O `bannertool` exige uma faixa de audio (o formato do banner inclui um CWAV), por isso o
+`silence.wav` de 0,1 s — resulta em silencio, sem musica. Se o menu inicial travar ao
+selecionar o app, o banner e o culpado: rode `build.sh` sem `-banner` em uma linha.
+
+A logo da Immich pertence ao projeto [Immich](https://immich.app). Este app **nao e
+oficial** nem afiliado; a logo e usada apenas para identificar o servico de destino.
 
 ## Testes
 

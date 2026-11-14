@@ -39,11 +39,12 @@ static int scan_dir(const char *dirpath, Photo *out, int n, int max)
     return n;
 }
 
-// por data do EXIF (string "YYYY:MM:DD HH:MM:SS" ordena lexicograficamente = cronologico)
+// mais recente primeiro (string "YYYY:MM:DD HH:MM:SS" ordena lexicograficamente =
+// cronologico, entao invertemos a comparacao). Sem data vai para o fim.
 static int cmp_photo(const void *a, const void *b)
 {
     const Photo *x = (const Photo *)a, *y = (const Photo *)b;
-    int c = strcmp(x->datetime, y->datetime);
+    int c = strcmp(y->datetime, x->datetime);
     return c ? c : strcmp(x->name, y->name);
 }
 
