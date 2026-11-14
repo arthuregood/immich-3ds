@@ -1,5 +1,7 @@
 # immich-3ds
 
+Por [arthuregood](https://github.com/arthuregood).
+
 Envia as fotos do Nintendo 3DS direto para o seu servidor [Immich](https://immich.app) — sem PC no meio, sem cartão SD na mão.
 
 Um app de homebrew (`.cia` / `.3dsx`) que lê `sdmc:/DCIM`, mostra as fotos na tela do 3DS, e sobe as marcadas para o Immich usando a API oficial.
@@ -119,6 +121,12 @@ O app fala TLS 1.2 com o mbedtls embarcado — não usa a pilha TLS do sistema (
 - TLS 1.2 é o teto do mbedtls 2.x — um servidor exigindo só TLS 1.3 não vai conectar.
 - A API key fica em texto plano no SD (ou compilada no binário, se você usou `.env`). Use uma key dedicada a este app, para poder revogar sem afetar os outros clientes.
 
+## Idioma
+
+A interface sai em portugues se o 3DS estiver configurado em portugues (`CFGU_GetSystemLanguage`);
+qualquer outro idioma usa ingles. Para forcar, adicione `lang=pt` ou `lang=en` em
+`sdmc:/immich-3ds/config.txt`.
+
 ## Icone e banner
 
 O menu inicial mostra o icone do app (SMDH) e, ao selecionar, um banner estatico na tela
@@ -154,3 +162,5 @@ A lógica pura (parser EXIF, formatação de data) roda no host:
 ## Licença
 
 MIT — veja [LICENSE](LICENSE).
+
+Autor: [arthuregood](https://github.com/arthuregood).

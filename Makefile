@@ -17,8 +17,8 @@ INCLUDES    :=  source
 ICON        :=  meta/icon.png
 
 APP_TITLE       := Immich 3DS
-APP_DESCRIPTION := Envia as fotos do 3DS para o Immich
-APP_AUTHOR      := immich-3ds
+APP_DESCRIPTION := Send 3DS photos to Immich
+APP_AUTHOR      := arthuregood
 
 #---------------------------------------------------------------------------------
 ARCH    :=  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft

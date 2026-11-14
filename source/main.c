@@ -10,6 +10,7 @@
 #include "immich.h"
 #include "thumb.h"
 #include "font.h"
+#include "i18n.h"
 
 #define TOP_W 400
 #define TOP_H 240
@@ -50,6 +51,9 @@ static int     thumb_key[PAGE];
 static uint8_t prev_px[PREV_W * PREV_H * 3];
 static int     prev_key = -1;
 
+static int g_online = -1;         // -1 checando, 0 offline, 1 online
+static char g_version[24];
+
 static int g_up_done, g_up_total, g_pct;
 static char g_up_name[40];
 static char g_result[96];
@@ -74,7 +78,7 @@ static const char *host_of(const char *server)
 // "2026:11:13 22:15:23" -> "13/11/2026"
 static void day_of(const Photo *p, char *out, size_t n)
 {
-    if (!p || strlen(p->datetime) < 10) { snprintf(out, n, "sem data"); return; }
+    if (!p || strlen(p->datetime) < 10) { snprintf(out, n, "%s", tr(S_NO_DATE)); return; }
     snprintf(out, n, "%.2s/%.2s/%.4s", p->datetime + 8, p->datetime + 5, p->datetime);
 }
 
@@ -120,7 +124,7 @@ static void draw_top(void)
     if (nphotos)
         snprintf(line, sizeof line, "%s  %s", photos[cursor].name, t);
     else
-        snprintf(line, sizeof line, "nenhuma foto em sdmc:/DCIM");
+        snprintf(line, sizeof line, "%s", tr(S_EMPTY));
 
     thumb_fill(fb, bpp, 0, STATUS_Y, TOP_W, TOP_H - STATUS_Y, TOP_W, TOP_H, 0x18, 0x18, 0x24);
     font_draw(fb, bpp, 6, STATUS_Y + 8, line, TOP_W, TOP_H, 0xE8, 0xE8, 0xF0);
@@ -160,15 +164,15 @@ static void draw_menu(uint8_t *fb, int bpp)
 {
     char item1[40], item2[48], day[16];
     day_of(&photos[cursor], day, sizeof day);
-    snprintf(item1, sizeof item1, "Enviar esta foto");
-    snprintf(item2, sizeof item2, "Enviar as %d de %s", count_day(cursor), day);
+    snprintf(item1, sizeof item1, "%s", tr(S_SEND_THIS));
+    snprintf(item2, sizeof item2, tr(S_SEND_DAY), count_day(cursor), day);
 
-    const char *items[3] = { item1, item2, "Cancelar" };
+    const char *items[3] = { item1, item2, tr(S_CANCEL) };
     int bx = 18, by = 62, bw = BOT_W - 36, bh = 26 + 3 * 20;
 
     thumb_fill(fb, bpp, bx - 2, by - 2, bw + 4, bh + 4, BOT_W, BOT_H, 0xFF, 0xFF, 0xFF);
     thumb_fill(fb, bpp, bx, by, bw, bh, BOT_W, BOT_H, 0x1A, 0x1A, 0x28);
-    font_draw(fb, bpp, bx + 8, by + 5, "Opcoes", BOT_W, BOT_H, 0x90, 0x90, 0xB0);
+    font_draw(fb, bpp, bx + 8, by + 5, tr(S_OPTIONS), BOT_W, BOT_H, 0x90, 0x90, 0xB0);
 
     for (int i = 0; i < 3; i++) {
         int y = by + 22 + i * 20;
@@ -191,9 +195,9 @@ static void draw_bottom(void)
     char day[16], hdr[64];
     if (nphotos) {
         day_of(&photos[cursor], day, sizeof day);
-        snprintf(hdr, sizeof hdr, "%s  %d fotos", day, count_day(cursor));
+        snprintf(hdr, sizeof hdr, "%s  %d %s", day, count_day(cursor), tr(S_PHOTOS));
     } else {
-        snprintf(hdr, sizeof hdr, "sem fotos");
+        snprintf(hdr, sizeof hdr, "%s", tr(S_NO_PHOTOS));
     }
     font_draw(fb, bpp, 4, 4, hdr, BOT_W, BOT_H, 0xF0, 0xD0, 0x40);
 
@@ -209,13 +213,19 @@ static void draw_bottom(void)
     snprintf(l2, sizeof l2, "%s", nphotos ? photos[cursor].name : "-");
     font_draw(fb, bpp, 4, FOOTER_Y + 4, l2, BOT_W, BOT_H, 0xE0, 0xE0, 0xE8);
     font_draw(fb, bpp, BOT_W - 4 - font_width(t), FOOTER_Y + 4, t, BOT_W, BOT_H, 0xE0, 0xE0, 0xE8);
-    font_draw(fb, bpp, 4, FOOTER_Y + 16, "A/touch: opcoes", BOT_W, BOT_H, 0x88, 0x88, 0xA0);
-    font_draw(fb, bpp, 4, FOOTER_Y + 28, cfg.server[0] ? host_of(cfg.server) : "sem servidor",
+    font_draw(fb, bpp, 4, FOOTER_Y + 16, tr(S_HINT), BOT_W, BOT_H, 0x88, 0x88, 0xA0);
+    font_draw(fb, bpp, 4, FOOTER_Y + 28, cfg.server[0] ? host_of(cfg.server) : tr(S_NO_SERVER),
               BOT_W, BOT_H, 0x70, 0x70, 0x88);
-    const char *tls = cfg.verify ? "TLS ok" : "TLS off";
-    font_draw(fb, bpp, BOT_W - 4 - font_width(tls), FOOTER_Y + 28, tls, BOT_W, BOT_H,
-              cfg.verify ? 0x60 : 0xC0, cfg.verify ? 0xC0 : 0xA0, 0x60);
-
+    char st[48] = {0};
+    if (!cfg.server[0] || !cfg.apikey[0]) st[0] = 0;
+    else if (g_online < 0) snprintf(st, sizeof st, "%s", tr(S_CHECKING));
+    else if (g_online == 0) snprintf(st, sizeof st, "%s", tr(S_OFFLINE));
+    else                    snprintf(st, sizeof st, tr(S_ONLINE), g_version);
+    if (st[0])
+    font_draw(fb, bpp, BOT_W - 4 - font_width(st), FOOTER_Y + 28, st, BOT_W, BOT_H,
+              g_online == 1 ? 0x60 : (g_online == 0 ? 0xE0 : 0x90),
+              g_online == 1 ? 0xC8 : (g_online == 0 ? 0x60 : 0x90),
+              g_online == 1 ? 0x60 : (g_online == 0 ? 0x60 : 0xA0));
     if (state == ST_MENU) draw_menu(fb, bpp);
 }
 
@@ -230,7 +240,7 @@ static void draw_upload_popup(void)
     thumb_border(fb, bpp, bx, by, bw, bh, 1, TOP_W, TOP_H, 0x90, 0x90, 0xB0);
 
     char l[48];
-    snprintf(l, sizeof l, "Enviando %d de %d", g_up_done, g_up_total);
+    snprintf(l, sizeof l, tr(S_SENDING), g_up_done, g_up_total);
     font_draw(fb, bpp, bx + 10, by + 12, l, TOP_W, TOP_H, 0xF0, 0xF0, 0xF8);
     font_draw(fb, bpp, bx + 10, by + 32, g_up_name, TOP_W, TOP_H, 0xA8, 0xA8, 0xC0);
 
@@ -252,7 +262,7 @@ static void draw_result_popup(void)
     thumb_fill(fb, bpp, bx, by, bw, bh, TOP_W, TOP_H, 0x18, 0x18, 0x26);
     thumb_border(fb, bpp, bx, by, bw, bh, 1, TOP_W, TOP_H, 0x90, 0x90, 0xB0);
     font_draw(fb, bpp, bx + 10, by + 16, g_result, TOP_W, TOP_H, 0xF0, 0xF0, 0xF8);
-    font_draw(fb, bpp, bx + 10, by + 48, "A: voltar", TOP_W, TOP_H, 0x90, 0x90, 0xA8);
+    font_draw(fb, bpp, bx + 10, by + 48, tr(S_BACK), TOP_W, TOP_H, 0x90, 0x90, 0xA8);
 }
 
 static void render(void)
@@ -304,8 +314,7 @@ static void send_list(const int *idx, int n)
         render();
     }
 
-    snprintf(g_result, sizeof g_result, "%d enviadas, %d repetidas, %d falhas",
-             g_ok, g_dup, g_fail);
+    snprintf(g_result, sizeof g_result, tr(S_RESULT), g_ok, g_dup, g_fail);
     state = ST_DONE;
     dirty = true;
 }
@@ -325,6 +334,19 @@ static void send_day(void)
 }
 
 //---------------------------------------------------------------------------------
+// Fala com o servidor sem travar a UI: timeout curto, e o resultado vai para o rodape.
+static void check_status(void)
+{
+    g_online = -1;
+    g_version[0] = 0;
+    dirty = true;
+    if (!cfg.server[0] || !cfg.apikey[0]) { g_online = 0; return; }
+
+    char err[100] = {0};
+    g_online = (immich_about(&cfg, g_version, sizeof g_version, err, sizeof err) == 0) ? 1 : 0;
+    dirty = true;
+}
+
 static void clamp_page(void)
 {
     if (cursor < page) page = (cursor / PAGE) * PAGE;
@@ -381,13 +403,24 @@ int main(int argc, char **argv)
     socInit((u32 *)memalign(0x1000, 0x40000), 0x40000);
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
+    i18n_init();
     config_load(&cfg);
     nphotos = dcim_scan(photos, MAX_PHOTOS);
     for (int i = 0; i < PAGE; i++) thumb_key[i] = -1;
 
+    render();        // mostra a galeria antes de ir na rede
+    check_status();
+
     while (aptMainLoop()) {
         hidScanInput();
         u32 k = hidKeysDown();
+
+        if (k & KEY_SELECT) {
+            config_setup(&cfg);
+            i18n_init();
+            check_status();
+        }
+        if (k & KEY_START) check_status();
 
         if (state == ST_GALLERY) {
             if (k & KEY_B) break;

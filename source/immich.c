@@ -87,6 +87,8 @@ int immich_about(const Config *c, char *version, size_t vsz, char *err, size_t e
     char url[256];
     snprintf(url, sizeof url, "%s/api/server/about", c->server);
     curl_easy_setopt(h, CURLOPT_URL, url);
+    curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 4L);   // check de status: nao travar a UI
+    curl_easy_setopt(h, CURLOPT_TIMEOUT, 6L);
 
     CURLcode rc = curl_easy_perform(h);
     int r = finish(h, headers, rc, err, errsz);
