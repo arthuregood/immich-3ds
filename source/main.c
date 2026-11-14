@@ -420,7 +420,6 @@ int main(int argc, char **argv)
             i18n_init();
             check_status();
         }
-        if (k & KEY_START) check_status();
 
         if (state == ST_GALLERY) {
             if (k & KEY_B) break;
