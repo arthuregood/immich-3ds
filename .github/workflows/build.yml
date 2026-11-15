@@ -80,16 +80,14 @@ jobs:
             install-qr.png
           generate_release_notes: true
           body: |
-            ## Instalar / Install
+            ## Install
 
-            **Pelo console / From the console:** FBI → *Remote Install → Scan QR Code*
+            **From the console:** FBI → *Remote Install → Scan QR Code*
 
             ![QR code](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/install-qr.png)
 
-            Esse código baixa sempre a release mais nova. *This code always fetches the newest release.*
+            The QR always downloads the newest release.
 
-            **Pelo cartão / From the SD card:** copie `immich-3ds.cia` para `sdmc:/cias/`
-            e instale com o FBI. *Copy it to the SD card and install with FBI.*
+            **From the SD card:** copy `immich-3ds.cia` to `sdmc:/cias/` and install it with FBI.
 
-            O `.3dsx` está incluído para o Homebrew Launcher (`sdmc:/3ds/`).
-            *The `.3dsx` is included for the Homebrew Launcher.*
+            The `.3dsx` is included for the Homebrew Launcher (`sdmc:/3ds/`).
