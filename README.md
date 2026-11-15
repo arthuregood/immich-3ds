@@ -4,99 +4,84 @@
 
 **English** · [Português](README.pt-BR.md)
 
-Send the photos from your Nintendo 3DS straight to your [Immich](https://immich.app) server — no PC in the middle.
+Uploads the photos on your 3DS SD card to [Immich](https://immich.app). Runs on the console, talks to the Immich API — no PC, no card reader.
 
-![Demo: browsing the gallery and uploading the photos of one day](docs/demo.gif)
+![Browsing the gallery and sending the photos of one day](docs/demo.gif)
 
-## What it does
+## How it works
 
-- Scans `sdmc:/DCIM`, grouped by day, newest first
-- Full photo on the top screen, thumbnail grid on the bottom one
-- Upload one photo or every photo from that day, with a progress popup
-- **No typing on the console**: first run opens a setup page in your phone's browser
-- Interface language follows the console (Portuguese or English)
-- Own icon and banner in the Home Menu
+The app lists what is in `sdmc:/DCIM`, grouped by day, newest first. The top screen shows the selected photo, the bottom screen is the thumbnail grid. Press A to send that one, or pick "send all from this day".
 
-| Gallery | Actions menu |
+Dates come from the JPEG's EXIF, not from the file timestamp — 3DS clocks drift, the photo's own date doesn't.
+
+| Gallery | Actions |
 |---|---|
 | ![Gallery](docs/screenshot-gallery.png) | ![Menu](docs/screenshot-menu.png) |
 
-## Requirements
+In Immich they arrive as normal photos, with the camera reported as Nintendo 3DS:
 
-- 3DS/2DS with [Luma3DS](https://github.com/LumaTeam/Luma3DS) and FBI
-- An Immich server reachable from the console (same network, HTTP or HTTPS)
-- An Immich API key (*Account Settings → API Keys*)
+| Album | Photo details |
+|---|---|
+| ![Album](docs/screenshot-immich-album.png) | ![Details](docs/screenshot-immich-info.png) |
+
+## What you need
+
+- A 3DS or 2DS with [Luma3DS](https://github.com/LumaTeam/Luma3DS) and FBI
+- An Immich server your console can reach on the network
+- An API key from *Account Settings → API Keys*
 
 ## Install
 
-Grab `immich-3ds.cia` from the [releases](../../releases) page, copy it to your SD card
-(for example `sdmc:/cias/`) and install it with **FBI**. It shows up in the Home Menu.
+Download `immich-3ds.cia` from [releases](../../releases), copy it to the SD card (e.g. `sdmc:/cias/`) and install it with FBI. It shows up in the Home Menu.
 
-## Setup
+## First setup
 
-### First run: from your phone or PC
-
-With no configuration, the app starts a small web server and shows the address on the top screen:
+There is nothing to type on the console. On first launch the app starts a small web server and shows the address on the top screen — open it on your phone, fill in the server URL and API key, send.
 
 ![Setup page](docs/screenshot-web.png)
 
-Open that address, fill in the server, the API key and the timezone, and hit **Send to 3DS**. The app
-saves it to `sdmc:/immich-3ds/.env`, tests the connection and goes back to the gallery.
-
-The same mode is available later: **SELECT → Setup in browser**.
-
-### Or: a `.env` file on the SD card
-
-Create `sdmc:/immich-3ds/.env`:
+If you would rather not use the browser, write the file yourself:
 
 ```
+sdmc:/immich-3ds/.env
+
 IMMICH_SERVER=http://192.168.0.10:2283
-IMMICH_API_KEY=your_api_key
+IMMICH_API_KEY=your_key
 IMMICH_TZ=-03:00
 lang=pt
 ```
 
-Only `IMMICH_SERVER` and `IMMICH_API_KEY` are required. `lang` (`pt`/`en`) forces the language.
-The app rewrites this same file whenever you configure it from the screen or the browser.
+Only the first two are required. Both routes are also under **SELECT → setup**, together with the 3DS keyboard if you just need to fix one field.
 
-### Or: the 3DS keyboard
-
-**SELECT → Setup with 3DS keyboard**. The key is ~60 characters, so this is handy for fixing a field,
-not for a first setup.
-
-## Using it
+## Controls
 
 | Input | Action |
 |---|---|
-| D-pad ← → ↑ ↓ | move through the photos |
-| A / touch | open the menu (send this photo, send all from this day) |
-| SELECT | settings |
+| D-pad | move through the photos |
+| A / touch | open the menu |
+| SELECT | setup |
 | B | exit |
 
-The footer shows the server and its status: `online v3.4.1` or `offline` (checked on boot and after
-saving the settings).
+The footer shows the server and whether it answered: `online v3.4.1` or `offline`. It checks on boot and after you save the settings.
 
-## Limitations
+## Good to know
 
-- Upload only; downloading from Immich to the 3DS does not exist yet
-- Reads only `sdmc:/DCIM` (camera photos and games that save there)
-- `.MPO` (3D photos) are uploaded as JPEG: Immich shows the first frame and keeps the original
-- TLS 1.2 is the ceiling of the bundled mbedTLS — a server that only accepts TLS 1.3 will not connect
-- The API key sits in plain text on the SD card. Use a dedicated key so you can revoke it alone
+- Upload only for now; downloading from Immich to the 3DS is not implemented
+- Reads `sdmc:/DCIM` only
+- `.MPO` (3D photos) uploads as JPEG — Immich keeps the original file
+- TLS 1.2 is the limit of the bundled mbedTLS
+- The API key is stored in plain text on the SD card, so use a key you can revoke on its own
 
-## Credits and legal notes
+## Credits
 
-- Built with [devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) +
-  [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/) and
-  [libjpeg-turbo](https://libjpeg-turbo.org).
-- The Immich name and logo belong to the [Immich](https://immich.app) project. This app is **not
-  official** nor affiliated with it; the logo is here only to identify the service you connect to.
-- The sample images in `docs/` are fan memes used as **test data only**. Characters and artwork are
-  trademarks of **Nintendo**; this project is not affiliated with, endorsed or sponsored by Nintendo.
-  If you fork this, swap those images for something you own.
+Built with [devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) + [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/) and [libjpeg-turbo](https://libjpeg-turbo.org).
 
-## License and contributing
+The Immich name and logo belong to the Immich project; this app is not official and not affiliated with it.
 
-MIT — see [LICENSE](LICENSE). Building from source, tests and release process: [CONTRIBUTING.md](CONTRIBUTING.md).
+The sample images in `docs/` are fan memes used as test data. Characters are trademarks of Nintendo, and this project is not affiliated with, endorsed or sponsored by Nintendo.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Build instructions, tests and release process are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 By [arthuregood](https://github.com/arthuregood).
