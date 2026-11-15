@@ -1,167 +1,143 @@
 # immich-3ds
 
-Por [arthuregood](https://github.com/arthuregood).
+**English** · [Português](README.pt-BR.md)
 
-Envia as fotos do Nintendo 3DS direto para o seu servidor [Immich](https://immich.app) — sem PC no meio, sem cartão SD na mão.
+Send the photos from your Nintendo 3DS straight to your [Immich](https://immich.app) server — no PC in the middle.
 
-Um app de homebrew (`.cia` / `.3dsx`) que lê `sdmc:/DCIM`, mostra as fotos na tela do 3DS, e sobe as marcadas para o Immich usando a API oficial.
+![Demo: browsing the gallery and uploading the photos of one day](docs/demo.gif)
 
-```
- 3DS  ──POST /api/assets──▶  Immich  ──▶  app do iPhone/Android (backup normal)
-```
+## What it does
 
-## Por que não AirDrop
+- Scans `sdmc:/DCIM`, grouped by day, newest first
+- Full photo on the top screen, thumbnail grid on the bottom one
+- Upload one photo or every photo from that day, with a progress popup
+- **No typing on the console**: first run opens a setup page in your phone's browser
+- Interface language follows the console (Portuguese or English)
+- Own icon and banner in the Home Menu
 
-AirDrop não é possível no 3DS, e não é questão de criptografia: a descoberta roda sobre **AWDL**, um protocolo de rádio que exige monitor mode e injeção de frames 802.11 — coisas que o firmware fechado do 3DS não expõe, e que o menu do iPhone só aceita de quem fala AWDL. Reimplementações abertas como [OpenDrop](https://github.com/seemoo-lab/opendrop) e [OWL](https://github.com/seemoo-lab/owl) só existem em placas Wi-Fi com monitor mode ativo.
+| Gallery | Actions menu |
+|---|---|
+| ![Gallery](docs/screenshot-gallery.png) | ![Menu](docs/screenshot-menu.png) |
 
-O caminho que funciona é o Immich: o 3DS sobe as fotos, e o iPhone as vê pelo app do Immich. O "vice-versa" já vem de graça.
+## Why not AirDrop
 
-## Status
+AirDrop is not possible on a 3DS, and it is not about encryption: discovery runs over **AWDL**, a
+radio protocol that needs monitor mode and raw frame injection — things the 3DS closed firmware
+does not expose, and the iPhone's share sheet only lists peers that speak AWDL. Open
+reimplementations like [OpenDrop](https://github.com/seemoo-lab/opendrop) only work on Wi-Fi cards
+with active monitor mode.
 
-- ✅ Envio das fotos do SD para o Immich (`.cia` e `.3dsx` compilando)
-- ✅ Galeria de miniaturas por data na tela de baixo, foto inteira na de cima
-- ✅ Menu de acoes (enviar esta / enviar todas do dia) e popup de progresso
-- ✅ Banner e icone proprios no menu inicial
-- ⬜ Navegar a biblioteca do Immich no 3DS e baixar para o SD
-- ⬜ Seleção múltipla por data, álbum por origem
+Immich is the path that does work: the 3DS uploads, and the iPhone sees it in the Immich app. The
+other direction comes for free.
 
-## Como funciona
+## Requirements
 
-1. Varre `sdmc:/DCIM/*/` procurando `.JPG` e `.MPO`
-2. Lê o `DateTime` do EXIF de cada arquivo (o relógio do 3DS costuma estar errado; o EXIF é a fonte confiável)
-3. `POST /api/assets` multipart com `assetData` + `fileCreatedAt` + `fileModifiedAt` + `filename`, autenticado por `x-api-key`
+- 3DS/2DS with [Luma3DS](https://github.com/LumaTeam/Luma3DS) and FBI
+- An Immich server reachable from the console (same network, HTTP or HTTPS)
+- An Immich API key (*Account Settings → API Keys*)
 
-O upload é feito em streaming direto do SD (`curl_mime`), então não carrega a foto na RAM.
+## Install
 
-A grade da tela de baixo decodifica os JPEG com `libjpeg-turbo` em escala reduzida (1/4 via DCT scaling, não 640x480 inteiro) e guarda 6 thumbs em cache de 106x80.
+Grab `immich-3ds.cia` from the [releases](../../releases) page, copy it to your SD card
+(for example `sdmc:/cias/`) and install it with **FBI**. It shows up in the Home Menu.
 
-## Compilar
+Alternatively, build from source and use the `.3dsx` through the Homebrew Launcher.
 
-### Com Docker (não precisa instalar nada)
+## Setup
 
-```sh
-./build.sh
-# gera immich-3ds.cia e immich-3ds.3dsx
-```
+### First run: from your phone or PC
 
-O script compila no container `devkitpro/devkitarm` e monta o `.cia` com o makerom num `ubuntu:24.04` (a imagem do devkitpro tem glibc antiga demais pro makerom atual). Em Mac com Apple Silicon usa `--platform linux/amd64`.
+With no configuration, the app starts a small web server and shows the address on the top screen:
 
-### Com devkitPro instalado
+![Setup page](docs/screenshot-web.png)
 
-```sh
-export DEVKITARM=/opt/devkitpro/devkitARM
-export DEVKITPRO=/opt/devkitpro
-make -j$(nproc)
-```
+Open that address, fill in the server, the API key and the timezone, and hit **Send to 3DS**. The app
+saves it to `sdmc:/immich-3ds/.env`, tests the connection and goes back to the gallery.
 
-Pacotes necessários: `3ds-dev` (libctru), `3ds-curl`, `3ds-mbedtls`, `3ds-zlib`.
+The same mode is available later: **SELECT → Setup in browser**.
 
-Depois, o `.cia`:
+### Or: a `.env` file on the SD card
 
-```sh
-makerom -f cia -o immich-3ds.cia -elf immich-3ds.elf -icon immich-3ds.smdh \
-        -desc app:2 -rsf app.rsf -target t
-```
-
-## Instalar
-
-- **`.cia`**: copie para o SD (ex: `sdmc:/cias/`) e instale com o **FBI**. Aparece no menu inicial.
-- **`.3dsx`**: copie para `sdmc:/3ds/immich-3ds/` e abra pelo Homebrew Launcher.
-
-## Configurar
-
-Tres formas, da mais confortavel para a mais manual. A primeira vez que o app abre sem
-configuracao, ele ja cai no modo navegador.
-
-### 1. Pelo navegador (sem digitar nada no console)
-
-Se o app nao achar configuracao, ele sobe um servidor HTTP e mostra o endereco na tela de
-cima:
-
-```
-Set up in your browser
-http://192.168.1.254:8080
-```
-
-Abra esse endereco no celular ou no PC (mesma rede), preencha servidor, API key e fuso, e
-toque em **Enviar pro 3DS**. O app salva em `sdmc:/immich-3ds/.env`, testa a conexao
-e volta para a galeria.
-
-O mesmo modo existe depois de configurado: **SELECT → Setup in browser**.
-
-### 2. Arquivo no cartao SD
-
-Crie `sdmc:/immich-3ds/.env` com:
+Create `sdmc:/immich-3ds/.env`:
 
 ```
 IMMICH_SERVER=http://192.168.0.10:2283
-IMMICH_API_KEY=sua_api_key
+IMMICH_API_KEY=your_api_key
 IMMICH_TZ=-03:00
 lang=pt
 ```
 
-Só `IMMICH_SERVER` e `IMMICH_API_KEY` sao obrigatorios. `lang` (`pt`/`en`) forca o idioma.
-O app reescreve esse mesmo arquivo quando voce configura pela tela ou pelo navegador.
+Only `IMMICH_SERVER` and `IMMICH_API_KEY` are required. `lang` (`pt`/`en`) forces the language.
+The app rewrites this same file whenever you configure it from the screen or the browser.
 
-### 3. Teclado do 3DS
+### Or: the 3DS keyboard
 
-**SELECT → Setup with 3DS keyboard**. A key tem ~60 caracteres, entao isso e util para
-corrigir um campo, nao para a primeira configuracao.
+**SELECT → Setup with 3DS keyboard**. The key is ~60 characters, so this is handy for fixing a field,
+not for a first setup.
 
-## Teclas
+## Using it
 
-| Tecla | Ação |
+| Input | Action |
 |---|---|
-| D-pad ↑ ↓ ← → | navegar na lista |
-| A / toque | abrir o menu (enviar / configurar) |
-| Y | marcar todas |
-| X | limpar marcação |
-| START | enviar marcadas |
-| SELECT | configurar |
-| B | sair |
+| D-pad ← → ↑ ↓ | move through the photos |
+| A / touch | open the menu (send this photo, send all from this day) |
+| SELECT | settings |
+| B | exit |
 
-## Limitações conhecidas
+The footer shows the server and its status: `online v3.4.1` or `offline` (checked on boot and after
+saving the settings).
 
-- Só **envia**; baixar do Immich para o 3DS ainda não existe.
-- Lê apenas `sdmc:/DCIM` (fotos da câmera e de jogos que salvam ali).
-- `.MPO` (foto 3D) sobe como JPEG: o Immich mostra o primeiro frame e preserva o original.
-- TLS 1.2 é o teto do mbedtls 2.x — um servidor exigindo só TLS 1.3 não vai conectar.
-- A API key fica em texto plano no SD (ou compilada no binário, se você usou `.env`). Use uma key dedicada a este app, para poder revogar sem afetar os outros clientes.
+## Limitations
 
-## Icone e banner
+- Upload only; downloading from Immich to the 3DS does not exist yet
+- Reads only `sdmc:/DCIM` (camera photos and games that save there)
+- `.MPO` (3D photos) are uploaded as JPEG: Immich shows the first frame and keeps the original
+- TLS 1.2 is the ceiling of the bundled mbedTLS — a server that only accepts TLS 1.3 will not connect
+- The API key sits in plain text on the SD card. Use a dedicated key so you can revoke it alone
 
-O menu inicial mostra o icone do app (SMDH) e, ao selecionar, um banner estatico na tela
-de cima. Nao ha modelo 3D: isso exige um banner CGfx/CWAV que o homebrew nao usa — o
-banner aqui e uma imagem 256x128.
-
-Os arquivos ficam em `meta/` e ja estao versionados (`banner.bnr` pronto), entao o build
-nao precisa de ferramenta extra. Para regerar depois de trocar `banner.png`:
+## Building
 
 ```sh
-bannertool makebanner -i meta/banner.png -a meta/silence.wav -o meta/banner.bnr
+./build.sh          # builds .3dsx and .cia with Docker (no devkitPro needed)
 ```
 
-O `bannertool` exige uma faixa de audio (o formato do banner inclui um CWAV), por isso o
-`silence.wav` de 0,1 s — resulta em silencio, sem musica. Se o menu inicial travar ao
-selecionar o app, o banner e o culpado: rode `build.sh` sem `-banner` em uma linha.
+With devkitPro installed natively, `make` uses `$DEVKITARM`; the `.cia` step needs
+[makerom](https://github.com/3DSGuy/Project_CTR).
 
-A logo da Immich pertence ao projeto [Immich](https://immich.app). Este app **nao e
-oficial** nem afiliado; a logo e usada apenas para identificar o servico de destino.
+Optional: copy `.env.example` to `.env` to bake the server and key into the binary at build time
+(handy for distributing a pre-configured build — but then the `.cia` contains your key).
 
-## Testes
+## Regenerating the demo assets
 
-A lógica pura (parser EXIF, formatação de data) roda no host:
+The GIF in this README was recorded with a build flag that drives the UI by itself and fakes the
+upload (no server needed):
+
+```sh
+make CFLAGS_EXTRA=-DDEMO
+```
+
+## Tests
 
 ```sh
 ./tests/run.sh
 ```
 
-## Créditos
+Covers the EXIF date parser and the urlencoded parser used by the setup page. Both are compiled for
+the host, no emulator needed.
 
-[devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) + [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/), [makerom](https://github.com/3DSGuy/Project_CTR), e a equipe do [Immich](https://immich.app) pela API.
+## Credits and legal notes
 
-## Licença
+- Built with [devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) +
+  [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/), [libjpeg-turbo](https://libjpeg-turbo.org),
+  and [makerom](https://github.com/3DSGuy/Project_CTR).
+- The Immich name and logo belong to the [Immich](https://immich.app) project. This app is **not
+  official** nor affiliated with it; the logo is here only to identify the service you connect to.
+- The sample images in `docs/` are fan memes used as **test data only**. Characters and artwork are
+  trademarks of **Nintendo**; this project is not affiliated with, endorsed or sponsored by Nintendo.
+  If you fork this, swap those images for something you own.
 
-MIT — veja [LICENSE](LICENSE).
+## License
 
-Autor: [arthuregood](https://github.com/arthuregood).
+MIT — see [LICENSE](LICENSE).
+
+By [arthuregood](https://github.com/arthuregood).

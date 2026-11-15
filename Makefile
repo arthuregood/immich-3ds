@@ -23,7 +23,7 @@ APP_AUTHOR      := by arthuregood
 #---------------------------------------------------------------------------------
 ARCH    :=  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
-CFLAGS  :=  -g -Wall -O2 -mword-relocations -ffunction-sections $(ARCH) $(INCLUDE) -D__3DS__ -DCURL_STATICLIB
+CFLAGS  :=  -g -Wall -O2 -mword-relocations -ffunction-sections $(ARCH) $(INCLUDE) -D__3DS__ -DCURL_STATICLIB $(CFLAGS_EXTRA)
 ASFLAGS :=  -g $(ARCH)
 LDFLAGS :=  -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 

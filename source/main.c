@@ -351,7 +351,19 @@ static void send_list(const int *idx, int n)
         render();
 
         char status[24] = {0}, err[120] = {0};
-        int r = immich_upload(&cfg, &photos[i], status, sizeof status, err, sizeof err, on_progress);
+        int r;
+#ifdef DEMO
+        // modo demo: progresso de mentira, sem tocar na rede
+        for (int p = 0; p <= 100; p += 2) {
+            g_pct = p;
+            render();
+            svcSleepThread(10000000LL);
+        }
+        snprintf(status, sizeof status, "created");
+        r = 0;
+#else
+        r = immich_upload(&cfg, &photos[i], status, sizeof status, err, sizeof err, on_progress);
+#endif
         if (r == 0) {
             if (!strcmp(status, "duplicate")) g_dup++;
             else { g_ok++; sent[i] = true; }
@@ -385,6 +397,12 @@ static void send_day(void)
 // Fala com o servidor sem travar a UI: timeout curto, e o resultado vai para o rodape.
 static void check_status(void)
 {
+#ifdef DEMO
+    g_online = 1;                       // no GIF nao existe rede: mostra o estado bom
+    snprintf(g_version, sizeof g_version, "v3.4.1");
+    dirty = true;
+    return;
+#endif
     g_online = -1;
     g_version[0] = 0;
     dirty = true;
@@ -484,9 +502,31 @@ int main(int argc, char **argv)
     render();        // mostra a tela antes de ir na rede
     if (state != ST_PAIRING) check_status();
 
+#ifdef DEMO
+    static u32 demo_n, demo_done_n;
+    u32 status_n = 0;
+#endif
+
     while (aptMainLoop()) {
         hidScanInput();
         u32 k = hidKeysDown();
+
+#ifdef DEMO
+        // roteiro para capturar o GIF: navega, abre o menu, envia, volta
+        demo_n++;
+        status_n = demo_n;
+        if (state == ST_GALLERY) {
+            if (status_n == 175 || status_n == 230 || status_n == 285 || status_n == 340)
+                k |= KEY_DOWN;
+            if (status_n == 410) k |= KEY_A;          // abre o menu
+        } else if (state == ST_MENU) {
+            if (status_n == 480) k |= KEY_DOWN;       // vai para "enviar as N do dia"
+            if (status_n == 550) k |= KEY_A;          // confirma
+        } else if (state == ST_DONE) {
+            if (!demo_done_n) demo_done_n = status_n;
+            if (status_n > demo_done_n + 110) { k |= KEY_A; demo_done_n = 0; }
+        }
+#endif
 
         if (k & KEY_SELECT) {
             state = ST_MENU;
