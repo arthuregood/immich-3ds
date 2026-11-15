@@ -4,7 +4,7 @@
 
 **English** · [Português](README.pt-BR.md)
 
-Uploads the photos on your 3DS SD card to [Immich](https://immich.app). Runs on the console, talks to the Immich API — no PC, no card reader.
+Uploads the photos on your 3DS SD card to [Immich](https://immich.app). It runs on the console and talks to the Immich API directly, so there is no PC in the middle.
 
 ![Browsing the gallery and sending the photos of one day](docs/demo.gif)
 
@@ -12,7 +12,7 @@ Uploads the photos on your 3DS SD card to [Immich](https://immich.app). Runs on 
 
 The app lists what is in `sdmc:/DCIM`, grouped by day, newest first. The top screen shows the selected photo, the bottom screen is the thumbnail grid. Press A to send that one, or pick "send all from this day".
 
-Dates come from the JPEG's EXIF, not from the file timestamp — 3DS clocks drift, the photo's own date doesn't.
+Dates come from the JPEG's EXIF, not from the file timestamp. 3DS clocks drift; the date inside the photo does not.
 
 | Gallery | Actions |
 |---|---|
@@ -27,18 +27,22 @@ In Immich they arrive as normal photos, with the camera reported as Nintendo 3DS
 ## What you need
 
 - A 3DS or 2DS with [Luma3DS](https://github.com/LumaTeam/Luma3DS) and FBI
-- An Immich server your console can reach on the network
-- An API key from *Account Settings → API Keys*
+- An Immich server reachable from the console
+- An API key from *User Settings → API Keys*
 
 ## Install
 
-Download `immich-3ds.cia` from [releases](../../releases), copy it to the SD card (e.g. `sdmc:/cias/`) and install it with FBI. It shows up in the Home Menu.
+Download `immich-3ds.cia` from [releases](../../releases), copy it to the SD card (e.g. `sdmc:/cias/`) and install it with FBI. The same release has a `.3dsx` if you prefer the Homebrew Launcher.
+
+To update later, install the newer `.cia` the same way. It replaces the app and keeps the settings that are on the SD card.
 
 ## First setup
 
-There is nothing to type on the console. On first launch the app starts a small web server and shows the address on the top screen — open it on your phone, fill in the server URL and API key, send.
+There is nothing to type on the console. On first launch the app starts a small web server and shows the address on the top screen. Open it on your phone, fill in the server URL and the API key, send.
 
 ![Setup page](docs/screenshot-web.png)
+
+That page has no password, and it shows the key you already saved. Press B on the console when you are done, which closes the server.
 
 If you would rather not use the browser, write the file yourself:
 
@@ -47,11 +51,18 @@ sdmc:/immich-3ds/.env
 
 IMMICH_SERVER=http://192.168.0.10:2283
 IMMICH_API_KEY=your_key
-IMMICH_TZ=-03:00
-lang=pt
+IMMICH_TZ=-03:00          # optional, defaults to -03:00; your offset from UTC
+lang=en                   # optional; without it the app follows the console language
 ```
 
-Only the first two are required. Both routes are also under **SELECT → setup**, together with the 3DS keyboard if you just need to fix one field.
+Only the server and the key are required. Both routes are also under **SELECT → setup**, together with the 3DS keyboard for when you just need to fix one field.
+
+## If it does not work
+
+- **The setup page does not open.** That address only works from the same network. You can find the console IP in *System Settings → Internet Settings → Connection Test*.
+- **The footer says `offline`.** Wi-Fi is up but Immich did not answer. Test the same URL in your phone's browser.
+- **`could not open the port (wifi off?)`.** Port 8080 is taken or Wi-Fi dropped. Try **SELECT → setup → browser** again.
+- **`no photos in sdmc:/DCIM`.** The photos are not where the app looks; see the folder rule below.
 
 ## Controls
 
@@ -62,26 +73,28 @@ Only the first two are required. Both routes are also under **SELECT → setup**
 | SELECT | setup |
 | B | exit |
 
-The footer shows the server and whether it answered: `online v3.4.1` or `offline`. It checks on boot and after you save the settings.
+The footer shows the server and whether it answered: `online` plus the server version, or `offline`. It checks on boot and after you save the settings.
 
 ## Good to know
 
 - Upload only for now; downloading from Immich to the 3DS is not implemented
-- Reads `sdmc:/DCIM` only
-- `.MPO` (3D photos) uploads as JPEG — Immich keeps the original file
+- Reads `sdmc:/DCIM` one folder deep, so photos must be inside a subfolder such as `sdmc:/DCIM/100NIN03/`, not loose in `sdmc:/DCIM`
+- Up to 512 photos are listed; anything beyond that is ignored
+- `.MPO` (3D photos) uploads as JPEG, and Immich keeps the original file
+- HTTPS works, but the certificate is **not verified** unless you put your CA at `sdmc:/immich-3ds/ca.pem`. For Let's Encrypt that file is the ISRG Root X1 certificate
 - TLS 1.2 is the limit of the bundled mbedTLS
-- The API key is stored in plain text on the SD card, so use a key you can revoke on its own
+- The API key sits in plain text on the SD card, so use one you can revoke on its own
 
 ## Credits
 
 Built with [devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) + [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/) and [libjpeg-turbo](https://libjpeg-turbo.org).
 
-The Immich name and logo belong to the Immich project; this app is not official and not affiliated with it.
+The Immich name and logo belong to the Immich project. This app is not official and not affiliated with it.
 
 The sample images in `docs/` are fan memes used as test data. Characters are trademarks of Nintendo, and this project is not affiliated with, endorsed or sponsored by Nintendo.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Build instructions, tests and release process are in [CONTRIBUTING.md](CONTRIBUTING.md).
+MIT, see [LICENSE](LICENSE). Build instructions, tests and the release process are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 By [arthuregood](https://github.com/arthuregood).

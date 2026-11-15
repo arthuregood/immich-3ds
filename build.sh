@@ -10,9 +10,10 @@ PLATFORM=""
 # roda o uid do host para os arquivos nao sairem como root
 USERFLAG=(--user "$(id -u):$(id -g)")
 
-echo "== compilando (devkitARM no Docker)"
+echo "== compilando (devkitARM no Docker, build limpo)"
 docker run --rm $PLATFORM "${USERFLAG[@]}" -v "$PWD":/work -w /work devkitpro/devkitarm \
-  bash -c 'export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH; make -j"$(nproc)"'
+  bash -c 'export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH; \
+           make clean >/dev/null && make -j"$(nproc)"'
 
 echo "== empacotando .cia"
 if [ ! -x .tools/makerom ]; then

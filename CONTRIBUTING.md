@@ -11,8 +11,10 @@ Quickest path, no toolchain installed (needs Docker):
 ./build.sh          # produces immich-3ds.3dsx and immich-3ds.cia
 ```
 
-With devkitPro installed natively you can use `make` directly; the `.cia` step needs
-[makerom](https://github.com/3DSGuy/Project_CTR) (the Docker path in `build.sh` does both).
+With devkitPro installed natively, export `DEVKITARM` (for example
+`export DEVKITARM=/opt/devkitpro/devkitARM`) and run `make`; without it the Makefile stops with
+"DEVKITARM nao definido". The `.cia` step needs [makerom](https://github.com/3DSGuy/Project_CTR),
+which `build.sh` downloads itself. `build.sh` also needs the Docker daemon running, not just installed.
 
 Optional: copy `.env.example` to `.env` to bake the server and API key into the binary at build time.
 Handy for a pre-configured build; remember the resulting `.cia` then contains your key, so never share

@@ -10,6 +10,8 @@
 #define CONFIG_FILE "sdmc:/immich-3ds/.env"
 #define CA_FILE     "sdmc:/immich-3ds/ca.pem"
 
+static char g_lang[8];   // preservado no save (config_save reescreve o arquivo)
+
 static void trim(char *s)
 {
     char *p = s;
@@ -17,6 +19,15 @@ static void trim(char *s)
     if (p != s) memmove(s, p, strlen(p) + 1);
     size_t n = strlen(s);
     while (n && (s[n - 1] == '\n' || s[n - 1] == '\r' || s[n - 1] == ' ' || s[n - 1] == '\t')) s[--n] = 0;
+}
+
+static void unquote(char *v)
+{
+    size_t n = strlen(v);
+    if (n >= 2 && ((v[0] == '"' && v[n-1] == '"') || (v[0] == '\'' && v[n-1] == '\''))) {
+        memmove(v, v + 1, n - 2);
+        v[n - 2] = 0;
+    }
 }
 
 static bool file_exists(const char *p)
@@ -52,13 +63,15 @@ bool config_load(Config *c)
             if (!eq) continue;
             *eq = 0;
             char *k = line, *v = eq + 1;
-            trim(k); trim(v);
+            trim(k); trim(v); unquote(v);
             if      (!strcasecmp(k, "server")  || !strcasecmp(k, "immich_server"))
                 snprintf(c->server, sizeof c->server, "%s", v);
             else if (!strcasecmp(k, "apikey")  || !strcasecmp(k, "immich_api_key"))
                 snprintf(c->apikey, sizeof c->apikey, "%s", v);
             else if (!strcasecmp(k, "tz")      || !strcasecmp(k, "immich_tz"))
                 snprintf(c->tz, sizeof c->tz, "%s", v);
+            else if (!strcasecmp(k, "lang")    || !strcasecmp(k, "immich_lang"))
+                snprintf(g_lang, sizeof g_lang, "%s", v);
         }
         fclose(f);
     }
@@ -78,6 +91,7 @@ bool config_save(const Config *c)
     if (!f) return false;
     fprintf(f, "IMMICH_SERVER=%s\nIMMICH_API_KEY=%s\nIMMICH_TZ=%s\n",
             c->server, c->apikey, c->tz);
+    if (g_lang[0]) fprintf(f, "lang=%s\n", g_lang);   // nao perder o idioma escolhido
     fclose(f);
     return true;
 }

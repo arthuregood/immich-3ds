@@ -101,9 +101,9 @@ void page_form(SBuf *b, const Config *c, int en)
     sb_str(b, T(en, "Enviar pro 3DS", "Send to 3DS"));
     sb_str(b, "</button></form><p class=hint>");
     sb_str(b, T(en,
-               "Gere a chave em Account Settings &rarr; API Keys.<br>"
+               "Gere a chave em User Settings &rarr; API Keys.<br>"
                "Salva em sdmc:/immich-3ds/.env",
-               "Create the key in Account Settings &rarr; API Keys.<br>"
+               "Create the key in User Settings &rarr; API Keys.<br>"
                "Saved to sdmc:/immich-3ds/.env"));
     sb_str(b, "</p></div>");
 }

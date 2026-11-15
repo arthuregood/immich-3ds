@@ -54,7 +54,7 @@ static CURL *make_handle(const Config *c, char *err, size_t errsz, struct curl_s
         curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, 1L);
         curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, 2L);
     } else {
-        curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, 0L);        // avisado na tela
+        curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, 0L);        // sem ca.pem no cartao: nao valida o servidor
         curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, 0L);
     }
     return h;
