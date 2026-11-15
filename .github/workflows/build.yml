@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # nada de .env commitado: a chave nunca deve entrar no binario pelo CI
       - name: Guard against committed credentials
@@ -53,7 +53,7 @@ jobs:
             -target t
           ls -lh immich-3ds.cia immich-3ds.3dsx
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: immich-3ds
           path: |
