@@ -79,10 +79,16 @@ void i18n_init(void)
         fclose(f);
     }
 
+    // sem cfguInit o servico nao responde e a gente cairia sempre no ingles
     u8 lang = CFG_LANGUAGE_EN;
-    if (R_FAILED(CFGU_GetSystemLanguage(&lang))) return;
+    if (R_FAILED(cfguInit())) return;
+    Result rc = CFGU_GetSystemLanguage(&lang);
+    cfguExit();
+    if (R_FAILED(rc)) return;
     g_en = (lang != CFG_LANGUAGE_PT);
 }
+
+int i18n_is_en(void) { return g_en; }
 
 const char *tr(StrId id)
 {

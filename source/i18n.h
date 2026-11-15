@@ -31,3 +31,4 @@ typedef enum {
 
 void i18n_init(void);
 const char *tr(StrId id);
+int i18n_is_en(void);

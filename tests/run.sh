@@ -8,3 +8,5 @@ cc -std=c11 -Wall -Wextra -O1 -Isource -o /tmp/test_exif tests/test_exif.c sourc
 /tmp/test_exif
 cc -std=c11 -Wall -Wextra -O1 -Isource -o /tmp/test_form tests/test_form.c source/form.c
 /tmp/test_form
+cc -std=c11 -Wall -Wextra -O1 -Isource -o /tmp/render_pages tests/render_pages.c source/page.c
+/tmp/render_pages

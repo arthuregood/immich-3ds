@@ -408,6 +408,7 @@ static void menu_activate(void)
         } else if (menu_sel == 1) {
             config_setup(&cfg);
             i18n_init();
+            pairing_set_lang(i18n_is_en());
             check_status();
         }
         return;
@@ -471,6 +472,7 @@ int main(int argc, char **argv)
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     i18n_init();
+    pairing_set_lang(i18n_is_en());
     config_load(&cfg);
     nphotos = dcim_scan(photos, MAX_PHOTOS);
     for (int i = 0; i < PAGE; i++) thumb_key[i] = -1;

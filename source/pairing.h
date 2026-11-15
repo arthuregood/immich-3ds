@@ -4,6 +4,7 @@
 
 // Servidor HTTP de pareamento: o usuario abre a URL no celular/PC,
 // digita servidor + chave, e o 3DS recebe. Sem teclado no console.
+void pairing_set_lang(int en);
 bool pairing_start(void);
 void pairing_stop(void);
 bool pairing_active(void);
