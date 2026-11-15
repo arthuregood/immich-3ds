@@ -1,4 +1,5 @@
 #include "page.h"
+#include "logo_svg.h"
 #include <string.h>
 
 void sb_init(SBuf *b, char *buf, size_t cap)
@@ -51,9 +52,8 @@ static void page_head(SBuf *b, int en)
               ".card{width:100%;max-width:380px;background:#161a21;border:1px solid #232935;"
               "border-radius:18px;padding:22px}"
               ".top{display:flex;align-items:center;gap:10px}"
-              ".mark{width:26px;height:26px;border-radius:50%;flex:0 0 auto;"
-              "background:conic-gradient(#e8453c 0 20%,#f0a30a 0 40%,#22a565 0 60%,"
-              "#3478f6 0 80%,#e8519a 0 100%)}"
+              ".mark{width:26px;height:26px;flex:0 0 auto}"
+              ".mark svg{width:100%;height:100%;display:block}"
               "h1{font-size:15px;font-weight:600;margin:0;letter-spacing:.2px}"
               "p.sub{color:#77808f;font-size:12px;margin:4px 0 18px 36px}"
               "label{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;"
@@ -78,7 +78,9 @@ static void page_head(SBuf *b, int en)
 void page_form(SBuf *b, const Config *c, int en)
 {
     page_head(b, en);
-    sb_str(b, "<div class=card><div class=top><div class=mark></div><h1>Immich 3DS</h1></div>"
+    sb_str(b, "<div class=card><div class=top><div class=mark>");
+    sb_str(b, LOGO_SVG);
+    sb_str(b, "</div><h1>Immich 3DS</h1></div>"
               "<p class=sub>");
     sb_str(b, T(en, "Configure e volte ao console.", "Set it up, then go back to the console."));
     sb_str(b, "</p><form method=post action=/save><label>");
@@ -99,15 +101,19 @@ void page_form(SBuf *b, const Config *c, int en)
     sb_str(b, T(en, "Enviar pro 3DS", "Send to 3DS"));
     sb_str(b, "</button></form><p class=hint>");
     sb_str(b, T(en,
-               "Gere a chave em Account Settings &rarr; API Keys. Salva em sdmc:/immich-3ds/.env",
-               "Create the key in Account Settings &rarr; API Keys. Saved to sdmc:/immich-3ds/.env"));
+               "Gere a chave em Account Settings &rarr; API Keys.<br>"
+               "Salva em sdmc:/immich-3ds/.env",
+               "Create the key in Account Settings &rarr; API Keys.<br>"
+               "Saved to sdmc:/immich-3ds/.env"));
     sb_str(b, "</p></div>");
 }
 
 void page_done(SBuf *b, int ok, const char *extra, int en)
 {
     page_head(b, en);
-    sb_str(b, "<div class=card><div class=top><div class=mark></div><h1>Immich 3DS</h1></div>"
+    sb_str(b, "<div class=card><div class=top><div class=mark>");
+    sb_str(b, LOGO_SVG);
+    sb_str(b, "</div><h1>Immich 3DS</h1></div>"
               "<p class=sub>");
     sb_str(b, ok ? T(en, "Configuracao recebida", "Configuration received")
                  : T(en, "Faltou dado", "Missing info"));

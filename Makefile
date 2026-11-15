@@ -18,7 +18,7 @@ ICON        :=  meta/icon.png
 
 APP_TITLE       := Immich 3DS
 APP_DESCRIPTION := Send 3DS photos to Immich
-APP_AUTHOR      := arthuregood
+APP_AUTHOR      := by arthuregood
 
 #---------------------------------------------------------------------------------
 ARCH    :=  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
