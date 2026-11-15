@@ -19,18 +19,7 @@ Manda as fotos do seu Nintendo 3DS direto para o seu servidor [Immich](https://i
 
 | Galeria | Menu de ações |
 |---|---|
-| ![Galeria](docs/screenshot-gallery.png) | ![Menu](docs/screenshot-menu.png) |
-
-## Por que não AirDrop
-
-AirDrop não é possível no 3DS, e não é questão de criptografia: a descoberta roda sobre **AWDL**, um
-protocolo de rádio que exige monitor mode e injeção de frames — coisas que o firmware fechado do 3DS
-não expõe, e o menu do iPhone só lista quem fala AWDL. Reimplementações abertas como o
-[OpenDrop](https://github.com/seemoo-lab/opendrop) só funcionam em placas Wi-Fi com monitor mode
-ativo.
-
-O caminho que funciona é o Immich: o 3DS sobe as fotos e o iPhone as vê no app do Immich. O outro
-sentido vem de graça.
+| ![Galeria](docs/screenshot-gallery-pt.png) | ![Menu](docs/screenshot-menu-pt.png) |
 
 ## Requisitos
 
@@ -43,15 +32,13 @@ sentido vem de graça.
 Baixe `immich-3ds.cia` na página de [releases](../../releases), copie para o cartão SD
 (por exemplo `sdmc:/cias/`) e instale com o **FBI**. Ele aparece no menu inicial.
 
-Alternativamente, compile e use o `.3dsx` pelo Homebrew Launcher.
-
 ## Configurar
 
 ### Primeira vez: pelo celular ou PC
 
 Sem configuração, o app sobe um pequeno servidor web e mostra o endereço na tela de cima:
 
-![Página de configuração](docs/screenshot-web.png)
+![Página de configuração](docs/screenshot-web-pt.png)
 
 Abra esse endereço, preencha servidor, API key e fuso, e toque em **Enviar pro 3DS**. O app salva em
 `sdmc:/immich-3ds/.env`, testa a conexão e volta para a galeria.
@@ -97,61 +84,19 @@ configuração).
 - TLS 1.2 é o teto do mbedTLS embarcado — servidor que só aceita TLS 1.3 não conecta
 - A API key fica em texto plano no cartão. Use uma key dedicada, para revogar só ela
 
-## Compilar
-
-```sh
-./build.sh          # gera .3dsx e .cia via Docker (não precisa de devkitPro)
-```
-
-Com devkitPro instalado nativamente, `make` usa `$DEVKITARM`; a etapa do `.cia` precisa do
-[makerom](https://github.com/3DSGuy/Project_CTR).
-
-Opcional: copie `.env.example` para `.env` para embutir servidor e key no binário em tempo de build
-(útil para distribuir uma build já configurada — mas aí o `.cia` carrega a sua key).
-
-## Regerar as imagens do README
-
-O GIF foi gravado com uma flag que percorre a interface sozinha e finge o envio (não precisa de
-servidor):
-
-```sh
-make CFLAGS_EXTRA=-DDEMO
-```
-
-## Publicar uma release
-
-Empurre uma tag e o CI faz o resto: roda os testes, compila dentro do container do devkitPro, empacota
-o `.cia` e publica os dois binários numa release do GitHub.
-
-```sh
-git tag v1.0.0 && git push --tags
-```
-
-Todo push e pull request também gera os artefatos (sem publicar), então build quebrada aparece como
-check vermelho.
-
-## Testes
-
-```sh
-./tests/run.sh
-```
-
-Cobre o leitor de data EXIF e o parser urlencoded da página de configuração. Os dois compilam no host,
-sem emulador.
-
 ## Créditos e notas legais
 
 - Feito com [devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) +
-  [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/), [libjpeg-turbo](https://libjpeg-turbo.org)
-  e [makerom](https://github.com/3DSGuy/Project_CTR).
+  [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/) e
+  [libjpeg-turbo](https://libjpeg-turbo.org).
 - O nome e a logo da Immich pertencem ao projeto [Immich](https://immich.app). Este app **não é
   oficial** nem afiliado; a logo está aqui só para identificar o serviço que você conecta.
 - As imagens de exemplo em `docs/` são memes de fã usados **apenas como dado de teste**. Personagens e
   artes são marcas da **Nintendo**; este projeto não é afiliado, endossado ou patrocinado pela Nintendo.
   Se você fizer um fork, troque essas imagens por algo seu.
 
-## Licença
+## Licença e contribuição
 
-MIT — veja [LICENSE](LICENSE).
+MIT — veja [LICENSE](LICENSE). Compilar do código, testes e processo de release: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Por [arthuregood](https://github.com/arthuregood).

@@ -21,17 +21,6 @@ Send the photos from your Nintendo 3DS straight to your [Immich](https://immich.
 |---|---|
 | ![Gallery](docs/screenshot-gallery.png) | ![Menu](docs/screenshot-menu.png) |
 
-## Why not AirDrop
-
-AirDrop is not possible on a 3DS, and it is not about encryption: discovery runs over **AWDL**, a
-radio protocol that needs monitor mode and raw frame injection — things the 3DS closed firmware
-does not expose, and the iPhone's share sheet only lists peers that speak AWDL. Open
-reimplementations like [OpenDrop](https://github.com/seemoo-lab/opendrop) only work on Wi-Fi cards
-with active monitor mode.
-
-Immich is the path that does work: the 3DS uploads, and the iPhone sees it in the Immich app. The
-other direction comes for free.
-
 ## Requirements
 
 - 3DS/2DS with [Luma3DS](https://github.com/LumaTeam/Luma3DS) and FBI
@@ -42,8 +31,6 @@ other direction comes for free.
 
 Grab `immich-3ds.cia` from the [releases](../../releases) page, copy it to your SD card
 (for example `sdmc:/cias/`) and install it with **FBI**. It shows up in the Home Menu.
-
-Alternatively, build from source and use the `.3dsx` through the Homebrew Launcher.
 
 ## Setup
 
@@ -97,61 +84,19 @@ saving the settings).
 - TLS 1.2 is the ceiling of the bundled mbedTLS — a server that only accepts TLS 1.3 will not connect
 - The API key sits in plain text on the SD card. Use a dedicated key so you can revoke it alone
 
-## Building
-
-```sh
-./build.sh          # builds .3dsx and .cia with Docker (no devkitPro needed)
-```
-
-With devkitPro installed natively, `make` uses `$DEVKITARM`; the `.cia` step needs
-[makerom](https://github.com/3DSGuy/Project_CTR).
-
-Optional: copy `.env.example` to `.env` to bake the server and key into the binary at build time
-(handy for distributing a pre-configured build — but then the `.cia` contains your key).
-
-## Regenerating the demo assets
-
-The GIF in this README was recorded with a build flag that drives the UI by itself and fakes the
-upload (no server needed):
-
-```sh
-make CFLAGS_EXTRA=-DDEMO
-```
-
-## Releasing
-
-Push a tag and CI does the rest: it runs the tests, compiles inside the devkitPro container,
-packages the `.cia` and publishes both binaries in a GitHub release.
-
-```sh
-git tag v1.0.0 && git push --tags
-```
-
-Every push and pull request also builds the artifacts (without publishing), so a broken build shows
-up as a red check.
-
-## Tests
-
-```sh
-./tests/run.sh
-```
-
-Covers the EXIF date parser and the urlencoded parser used by the setup page. Both are compiled for
-the host, no emulator needed.
-
 ## Credits and legal notes
 
 - Built with [devkitPro](https://devkitpro.org) / libctru, [curl](https://curl.se) +
-  [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/), [libjpeg-turbo](https://libjpeg-turbo.org),
-  and [makerom](https://github.com/3DSGuy/Project_CTR).
+  [mbedTLS](https://www.trustedfirmware.org/projects/mbed-tls/) and
+  [libjpeg-turbo](https://libjpeg-turbo.org).
 - The Immich name and logo belong to the [Immich](https://immich.app) project. This app is **not
   official** nor affiliated with it; the logo is here only to identify the service you connect to.
 - The sample images in `docs/` are fan memes used as **test data only**. Characters and artwork are
   trademarks of **Nintendo**; this project is not affiliated with, endorsed or sponsored by Nintendo.
   If you fork this, swap those images for something you own.
 
-## License
+## License and contributing
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Building from source, tests and release process: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 By [arthuregood](https://github.com/arthuregood).
