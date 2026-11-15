@@ -36,6 +36,16 @@ Baixe `immich-3ds.cia` nas [releases](../../releases), copie para o cartão SD (
 
 Para atualizar depois, instale o `.cia` novo do mesmo jeito. Ele substitui o app e mantém a configuração que está no cartão SD.
 
+### Sem o cartão SD
+
+O FBI instala direto do console. Abra **Remote Install → Scan QR Code** e aponte a câmera para este:
+
+![QR code com o link direto do arquivo](docs/install-qr.png)
+
+O arquivo está hospedado fora do GitHub, então o link pode expirar; se parar de funcionar, use o `.cia`
+da release acima. Um QR apontando para a release do GitHub não funciona: o TLS do console para no 1.1 e
+o GitHub só aceita 1.2.
+
 ## Primeira configuração
 
 Não precisa digitar nada no console. Na primeira vez o app sobe um pequeno servidor web e mostra o endereço na tela de cima. Abra no celular, preencha a URL do servidor e a API key, envie.
