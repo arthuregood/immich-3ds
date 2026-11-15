@@ -5,6 +5,7 @@
 typedef enum {
     S_SEND_THIS,
     S_SEND_DAY,      // "%d" = quantidade, "%s" = data
+    S_SEND_ALL,      // "%d" = total de fotos
     S_CANCEL,
     S_OPTIONS,
     S_NO_DATE,

@@ -164,35 +164,41 @@ static void draw_grid(uint8_t *fb, int bpp)
 }
 
 // Itens do menu: depende de onde ele foi aberto (foto ou configuracao).
-static void menu_items(const char **items, char *b1, size_t b1sz, char *b2, size_t b2sz)
+// Devolve quantos itens existem.
+static int menu_items(const char **items, char *b1, size_t b1sz,
+                      char *b2, size_t b2sz, char *b3, size_t b3sz)
 {
     if (menu_kind == MENU_SETTINGS) {
         items[0] = tr(S_SET_BROWSER);
         items[1] = tr(S_SET_KEYBOARD);
         items[2] = tr(S_CANCEL);
-        return;
+        return 3;
     }
     char day[16];
     day_of(nphotos ? &photos[cursor] : NULL, day, sizeof day);
     snprintf(b1, b1sz, "%s", tr(S_SEND_THIS));
     snprintf(b2, b2sz, tr(S_SEND_DAY), nphotos ? count_day(cursor) : 0, day);
+    snprintf(b3, b3sz, tr(S_SEND_ALL), nphotos);
     items[0] = b1;
     items[1] = b2;
-    items[2] = tr(S_CANCEL);
+    items[2] = b3;
+    items[3] = tr(S_CANCEL);
+    return 4;
 }
 
 static void draw_menu(uint8_t *fb, int bpp)
 {
-    char item1[40], item2[64];
-    const char *items[3];
-    menu_items(items, item1, sizeof item1, item2, sizeof item2);
-    int bx = 18, by = 62, bw = BOT_W - 36, bh = 26 + 3 * 20;
+    char item1[40], item2[64], item3[64];
+    const char *items[4];
+    int n = menu_items(items, item1, sizeof item1, item2, sizeof item2,
+                       item3, sizeof item3);
+    int bx = 18, by = 62, bw = BOT_W - 36, bh = 26 + n * 20;
 
     thumb_fill(fb, bpp, bx - 2, by - 2, bw + 4, bh + 4, BOT_W, BOT_H, 0xFF, 0xFF, 0xFF);
     thumb_fill(fb, bpp, bx, by, bw, bh, BOT_W, BOT_H, 0x1A, 0x1A, 0x28);
     font_draw(fb, bpp, bx + 8, by + 5, tr(S_OPTIONS), BOT_W, BOT_H, 0x90, 0x90, 0xB0);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < n; i++) {
         int y = by + 22 + i * 20;
         if (i == menu_sel)
             thumb_fill(fb, bpp, bx + 2, y - 2, bw - 4, 14, BOT_W, BOT_H, 0x30, 0x50, 0x90);
@@ -385,6 +391,13 @@ static void send_current(void)
     send_list(idx, 1);
 }
 
+static void send_all_photos(void)
+{
+    static int idx[MAX_PHOTOS];
+    for (int i = 0; i < nphotos; i++) idx[i] = i;
+    if (nphotos) send_list(idx, nphotos);
+}
+
 static void send_day(void)
 {
     int idx[MAX_PHOTOS], n = 0;
@@ -434,6 +447,7 @@ static void menu_activate(void)
 
     if (menu_sel == 0) send_current();
     else if (menu_sel == 1) send_day();
+    else if (menu_sel == 2) send_all_photos();
 }
 
 static void clamp_page(void)
@@ -451,7 +465,10 @@ static void handle_touch(void)
 
     if (state == ST_MENU) {
         int bx = 18, by = 62;
-        for (int i = 0; i < 3; i++) {
+        char a[40], b[64], c[64];
+        const char *it[4];
+        int nitems = menu_items(it, a, sizeof a, b, sizeof b, c, sizeof c);
+        for (int i = 0; i < nitems; i++) {
             int y = by + 22 + i * 20;
             if (t.px >= bx && t.px < bx + (BOT_W - 36) && t.py >= y - 2 && t.py < y + 14) {
                 menu_sel = i;
@@ -547,8 +564,13 @@ int main(int argc, char **argv)
             clamp_page();
         } else if (state == ST_MENU) {
             if (k & KEY_B) { state = ST_GALLERY; dirty = true; }
-            if (k & KEY_DOWN) { menu_sel = (menu_sel + 1) % 3; dirty = true; }
-            if (k & KEY_UP) { menu_sel = (menu_sel + 2) % 3; dirty = true; }
+            {
+                char a[40], b[64], c[64];
+                const char *it[4];
+                int n = menu_items(it, a, sizeof a, b, sizeof b, c, sizeof c);
+                if (k & KEY_DOWN) { menu_sel = (menu_sel + 1) % n; dirty = true; }
+                if (k & KEY_UP) { menu_sel = (menu_sel + n - 1) % n; dirty = true; }
+            }
             if (k & KEY_A) menu_activate();
         } else if (state == ST_DONE) {
             if (k & (KEY_A | KEY_B)) { state = ST_GALLERY; dirty = true; }

@@ -11,6 +11,7 @@ static const char *tbl[2][S_COUNT] = {
     /* ingles */ {
         "Send this photo",
         "Send all %d from %s",
+        "Send all %d photos",
         "Cancel",
         "Options",
         "no date",
@@ -36,6 +37,7 @@ static const char *tbl[2][S_COUNT] = {
     /* portugues */ {
         "Enviar esta foto",
         "Enviar as %d de %s",
+        "Enviar todas as %d fotos",
         "Cancelar",
         "Opcoes",
         "sem data",
