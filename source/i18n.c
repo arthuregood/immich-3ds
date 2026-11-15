@@ -62,15 +62,15 @@ static const char *tbl[2][S_COUNT] = {
 
 void i18n_init(void)
 {
-    // IMMICH_LANG=pt|en em sdmc:/immich-3ds/config.txt vence o idioma do console
-    FILE *f = fopen("sdmc:/immich-3ds/config.txt", "r");
+    // lang=pt|en em sdmc:/immich-3ds/.env vence o idioma do console
+    FILE *f = fopen("sdmc:/immich-3ds/.env", "r");
     if (f) {
         char line[128];
         while (fgets(line, sizeof line, f)) {
             char *eq = strchr(line, '=');
             if (!eq) continue;
             *eq = 0;
-            if (strcasecmp(line, "lang")) continue;
+            if (strcasecmp(line, "lang") && strcasecmp(line, "immich_lang")) continue;
             char *v = eq + 1;
             while (*v == ' ') v++;
             if (!strncasecmp(v, "pt", 2)) { g_en = 0; fclose(f); return; }

@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// Lido de sdmc:/immich-3ds/config.txt  (nunca fica no repositório)
+// Lido de sdmc:/immich-3ds/.env  (nunca fica no repositório)
 typedef struct {
     char server[200];   // ex: http://192.168.0.10:2283  (sem barra no fim)
     char apikey[200];

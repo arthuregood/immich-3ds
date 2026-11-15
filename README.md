@@ -84,24 +84,24 @@ http://192.168.1.254:8080
 ```
 
 Abra esse endereco no celular ou no PC (mesma rede), preencha servidor, API key e fuso, e
-toque em **Enviar pro 3DS**. O app salva em `sdmc:/immich-3ds/config.txt`, testa a conexao
+toque em **Enviar pro 3DS**. O app salva em `sdmc:/immich-3ds/.env`, testa a conexao
 e volta para a galeria.
 
 O mesmo modo existe depois de configurado: **SELECT → Setup in browser**.
 
 ### 2. Arquivo no cartao SD
 
-Crie `sdmc:/immich-3ds/config.txt` (ou `.env`, os dois funcionam) com:
+Crie `sdmc:/immich-3ds/.env` com:
 
 ```
-server=http://192.168.0.10:2283
-apikey=sua_api_key
-tz=-03:00
+IMMICH_SERVER=http://192.168.0.10:2283
+IMMICH_API_KEY=sua_api_key
+IMMICH_TZ=-03:00
 lang=pt
 ```
 
-Os nomes `IMMICH_SERVER`, `IMMICH_API_KEY` e `IMMICH_TZ` tambem valem, se voce preferir o
-estilo `.env`. Só `server` e `apikey` sao obrigatorios. `lang` (`pt`/`en`) forca o idioma.
+Só `IMMICH_SERVER` e `IMMICH_API_KEY` sao obrigatorios. `lang` (`pt`/`en`) forca o idioma.
+O app reescreve esse mesmo arquivo quando voce configura pela tela ou pelo navegador.
 
 ### 3. Teclado do 3DS
 

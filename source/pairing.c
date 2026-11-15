@@ -69,7 +69,7 @@ static void page_form(SBuf *b, const Config *c)
            "<label>Fuso</label><input name=tz value=\"");
     app_html(b, c->tz);
     app(b, "\"><button>Enviar pro 3DS</button></form>"
-           "<p class=sub style=\"margin-top:18px\">A key fica salva em sdmc:/immich-3ds/config.txt</p>");
+           "<p class=sub style=\"margin-top:18px\">A key fica salva em sdmc:/immich-3ds/.env</p>");
 }
 
 static void page_done(SBuf *b, bool ok, const char *extra)

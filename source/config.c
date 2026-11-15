@@ -7,8 +7,7 @@
 #include <3ds.h>
 
 #define CONFIG_DIR  "sdmc:/immich-3ds"
-#define CONFIG_FILE "sdmc:/immich-3ds/config.txt"
-#define ENV_FILE    "sdmc:/immich-3ds/.env"
+#define CONFIG_FILE "sdmc:/immich-3ds/.env"
 #define CA_FILE     "sdmc:/immich-3ds/ca.pem"
 
 static void trim(char *s)
@@ -44,7 +43,6 @@ bool config_load(Config *c)
     config_defaults(c);
 
     FILE *f = fopen(CONFIG_FILE, "r");
-    if (!f) f = fopen(ENV_FILE, "r");      // aceita .env tambem
     if (f) {
         char line[420];
         while (fgets(line, sizeof line, f)) {
@@ -78,7 +76,8 @@ bool config_save(const Config *c)
     mkdir(CONFIG_DIR, 0777);
     FILE *f = fopen(CONFIG_FILE, "w");
     if (!f) return false;
-    fprintf(f, "server=%s\napikey=%s\ntz=%s\n", c->server, c->apikey, c->tz);
+    fprintf(f, "IMMICH_SERVER=%s\nIMMICH_API_KEY=%s\nIMMICH_TZ=%s\n",
+            c->server, c->apikey, c->tz);
     fclose(f);
     return true;
 }
