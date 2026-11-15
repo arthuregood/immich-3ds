@@ -21,6 +21,13 @@ static void trim(char *s)
     while (n && (s[n - 1] == '\n' || s[n - 1] == '\r' || s[n - 1] == ' ' || s[n - 1] == '\t')) s[--n] = 0;
 }
 
+// corta comentario inline ("valor  # explicacao"), que antes ia parar dentro do valor
+static void strip_comment(char *v)
+{
+    char *h = strchr(v, '#');
+    if (h) *h = 0;
+}
+
 static void unquote(char *v)
 {
     size_t n = strlen(v);
@@ -63,7 +70,7 @@ bool config_load(Config *c)
             if (!eq) continue;
             *eq = 0;
             char *k = line, *v = eq + 1;
-            trim(k); trim(v); unquote(v);
+            trim(k); trim(v); strip_comment(v); trim(v); unquote(v);
             if      (!strcasecmp(k, "server")  || !strcasecmp(k, "immich_server"))
                 snprintf(c->server, sizeof c->server, "%s", v);
             else if (!strcasecmp(k, "apikey")  || !strcasecmp(k, "immich_api_key"))
