@@ -10,7 +10,7 @@ int main(void)
     SBuf b;
     Config c;
     memset(&c, 0, sizeof c);
-    snprintf(c.server, sizeof c.server, "http://192.168.1.106:2283");
+    snprintf(c.server, sizeof c.server, "http://192.168.0.10:2283");
     snprintf(c.tz, sizeof c.tz, "-03:00");
 
     sb_init(&b, buf, sizeof buf);
@@ -21,7 +21,7 @@ int main(void)
     printf("form: %zu bytes\n", b.n);
 
     sb_init(&b, buf, sizeof buf);
-    page_done(&b, 1, "http://192.168.1.106:2283", 0);
+    page_done(&b, 1, "http://192.168.0.10:2283", 0);
     f = fopen("/tmp/immich-done.html", "wb");
     fwrite(buf, 1, b.n, f);
     fclose(f);
