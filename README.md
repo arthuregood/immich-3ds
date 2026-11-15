@@ -42,7 +42,7 @@ FBI can install straight from the console. Open **Remote Install → Scan QR Cod
 
 ![QR code with the direct download link](docs/install-qr.png)
 
-Hosted outside GitHub, so the link may expire; if it does, use the `.cia` from the release.
+It always downloads the newest release, so this code does not need to change between versions.
 
 ## First setup
 

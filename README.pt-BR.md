@@ -42,7 +42,7 @@ Dá pra instalar direto pelo console. No FBI, **Remote Install → Scan QR Code*
 
 ![QR code com o link direto do arquivo](docs/install-qr.png)
 
-Hospedado fora do GitHub, então o link pode expirar; se expirar, usa o `.cia` da release.
+Ele sempre baixa a release mais nova, então esse código não muda entre versões.
 
 ## Primeira configuração
 

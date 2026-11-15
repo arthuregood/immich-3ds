@@ -53,12 +53,21 @@ jobs:
             -target t
           ls -lh immich-3ds.cia immich-3ds.3dsx
 
+      - name: Generate install QR
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qrencode
+          qrencode -o install-qr.png -s 8 -m 2 \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/immich-3ds.cia"
+          file install-qr.png
+
       - uses: actions/upload-artifact@v5
         with:
           name: immich-3ds
           path: |
             immich-3ds.cia
             immich-3ds.3dsx
+            install-qr.png
           if-no-files-found: error
 
       - name: Release
@@ -68,14 +77,19 @@ jobs:
           files: |
             immich-3ds.cia
             immich-3ds.3dsx
+            install-qr.png
           generate_release_notes: true
           body: |
             ## Instalar / Install
 
-            1. Copie `immich-3ds.cia` para o cartão SD (por exemplo `sdmc:/cias/`).
-               *Copy `immich-3ds.cia` to your SD card.*
-            2. Instale com o FBI. *Install it with FBI.*
-            3. Abra o app: na primeira vez ele mostra um endereço para você configurar
-               pelo celular. *First run shows an address to set it up from your phone.*
+            **Pelo console / From the console:** FBI → *Remote Install → Scan QR Code*
 
-            `.3dsx` também está incluído, para o Homebrew Launcher.
+            ![QR code](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/install-qr.png)
+
+            Esse código baixa sempre a release mais nova. *This code always fetches the newest release.*
+
+            **Pelo cartão / From the SD card:** copie `immich-3ds.cia` para `sdmc:/cias/`
+            e instale com o FBI. *Copy it to the SD card and install with FBI.*
+
+            O `.3dsx` está incluído para o Homebrew Launcher (`sdmc:/3ds/`).
+            *The `.3dsx` is included for the Homebrew Launcher.*
