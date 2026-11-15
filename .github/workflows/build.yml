@@ -1,0 +1,81 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # nada de .env commitado: a chave nunca deve entrar no binario pelo CI
+      - name: Guard against committed credentials
+        run: |
+          tracked=$(git ls-files | grep -E '(^|/)\.env(\..+)?$' | grep -v '^\.env\.example$' || true)
+          if [ -n "$tracked" ]; then
+            echo "::error::arquivo de credenciais versionado: $tracked"
+            exit 1
+          fi
+
+      - name: Tests
+        run: ./tests/run.sh
+
+      - name: Compile (.elf / .smdh / .3dsx)
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v "$PWD":/work -w /work devkitpro/devkitarm \
+            bash -c 'export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH; make -j"$(nproc)"'
+
+      - name: Fetch makerom
+        run: |
+          mkdir -p .tools
+          curl -fsSL -o /tmp/makerom.zip \
+            https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.19.0/makerom-v0.19.0-ubuntu_x86_64.zip
+          unzip -oq /tmp/makerom.zip -d .tools
+          chmod +x .tools/makerom
+
+      - name: Package the .cia
+        run: |
+          .tools/makerom -f cia -o immich-3ds.cia \
+            -elf immich-3ds.elf \
+            -icon immich-3ds.smdh \
+            -banner meta/banner.bnr \
+            -desc app:2 \
+            -rsf app.rsf \
+            -target t
+          ls -lh immich-3ds.cia immich-3ds.3dsx
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: immich-3ds
+          path: |
+            immich-3ds.cia
+            immich-3ds.3dsx
+          if-no-files-found: error
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            immich-3ds.cia
+            immich-3ds.3dsx
+          generate_release_notes: true
+          body: |
+            ## Instalar / Install
+
+            1. Copie `immich-3ds.cia` para o cartão SD (por exemplo `sdmc:/cias/`).
+               *Copy `immich-3ds.cia` to your SD card.*
+            2. Instale com o FBI. *Install it with FBI.*
+            3. Abra o app: na primeira vez ele mostra um endereço para você configurar
+               pelo celular. *First run shows an address to set it up from your phone.*
+
+            `.3dsx` também está incluído, para o Homebrew Launcher.

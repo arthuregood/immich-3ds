@@ -1,5 +1,7 @@
 # immich-3ds
 
+[![build](https://github.com/arthuregood/immich-3ds/actions/workflows/build.yml/badge.svg)](https://github.com/arthuregood/immich-3ds/actions/workflows/build.yml)
+
 **English** · [Português](README.pt-BR.md)
 
 Send the photos from your Nintendo 3DS straight to your [Immich](https://immich.app) server — no PC in the middle.
@@ -115,6 +117,18 @@ upload (no server needed):
 ```sh
 make CFLAGS_EXTRA=-DDEMO
 ```
+
+## Releasing
+
+Push a tag and CI does the rest: it runs the tests, compiles inside the devkitPro container,
+packages the `.cia` and publishes both binaries in a GitHub release.
+
+```sh
+git tag v1.0.0 && git push --tags
+```
+
+Every push and pull request also builds the artifacts (without publishing), so a broken build shows
+up as a red check.
 
 ## Tests
 

@@ -1,5 +1,7 @@
 # immich-3ds
 
+[![build](https://github.com/arthuregood/immich-3ds/actions/workflows/build.yml/badge.svg)](https://github.com/arthuregood/immich-3ds/actions/workflows/build.yml)
+
 [English](README.md) · **Português**
 
 Manda as fotos do seu Nintendo 3DS direto para o seu servidor [Immich](https://immich.app) — sem PC no meio.
@@ -115,6 +117,18 @@ servidor):
 ```sh
 make CFLAGS_EXTRA=-DDEMO
 ```
+
+## Publicar uma release
+
+Empurre uma tag e o CI faz o resto: roda os testes, compila dentro do container do devkitPro, empacota
+o `.cia` e publica os dois binários numa release do GitHub.
+
+```sh
+git tag v1.0.0 && git push --tags
+```
+
+Todo push e pull request também gera os artefatos (sem publicar), então build quebrada aparece como
+check vermelho.
 
 ## Testes
 
