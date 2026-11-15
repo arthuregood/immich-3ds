@@ -10,7 +10,7 @@ Uploads the photos on your 3DS SD card to [Immich](https://immich.app). It runs 
 
 ## How it works
 
-The app lists what is in `sdmc:/DCIM`, grouped by day, newest first. The top screen shows the selected photo, the bottom screen is the thumbnail grid. Press A to send that one, or pick "send all from this day".
+The app lists what is in `sdmc:/DCIM`, grouped by day, newest first. You can upload one photo or everything from the same date.
 
 Dates come from the JPEG's EXIF, not from the file timestamp. 3DS clocks drift; the date inside the photo does not.
 
@@ -42,7 +42,9 @@ There is nothing to type on the console. On first launch the app starts a small 
 
 ![Setup page](docs/screenshot-web.png)
 
-That page has no password, and it shows the key you already saved. Press B on the console when you are done, which closes the server.
+Nothing leaves your network here: the page is served by the console itself, so the key goes straight from your browser to the 3DS, no cloud in between.
+
+It has no password, and it shows the key you already saved, so press B on the console when you are done. That closes the server.
 
 If you would rather not use the browser, write the file yourself:
 
@@ -77,13 +79,13 @@ The footer shows the server and whether it answered: `online` plus the server ve
 
 ## Good to know
 
-- Upload only for now; downloading from Immich to the 3DS is not implemented
-- Reads `sdmc:/DCIM` one folder deep, so photos must be inside a subfolder such as `sdmc:/DCIM/100NIN03/`, not loose in `sdmc:/DCIM`
-- Up to 512 photos are listed; anything beyond that is ignored
-- `.MPO` (3D photos) uploads as JPEG, and Immich keeps the original file
-- HTTPS works, but the certificate is **not verified** unless you put your CA at `sdmc:/immich-3ds/ca.pem`. For Let's Encrypt that file is the ISRG Root X1 certificate
+- Upload only; there is no download from Immich to the 3DS yet
+- Reads `sdmc:/DCIM` one folder deep, so photos must sit in a subfolder like `sdmc:/DCIM/100NIN03/`
+- Up to 512 photos are listed, the rest is ignored
+- `.MPO` (3D photos) uploads as JPEG; Immich keeps the original
+- The certificate is **not verified** unless you put your CA at `sdmc:/immich-3ds/ca.pem` (for Let's Encrypt, the ISRG Root X1 file)
 - TLS 1.2 is the limit of the bundled mbedTLS
-- The API key sits in plain text on the SD card, so use one you can revoke on its own
+- The API key is plain text on the SD card, so use one you can revoke alone
 
 ## Credits
 
