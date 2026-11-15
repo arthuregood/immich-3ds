@@ -43,9 +43,7 @@ at this:
 
 ![QR code with the direct download link](docs/install-qr.png)
 
-The file is hosted outside GitHub, so the link may expire; if it stops working, use the `.cia` from the
-release above. A QR pointing at the GitHub release cannot work: the console's TLS stops at 1.1 and
-GitHub only accepts 1.2.
+Hosted outside GitHub, so the link may expire; if it does, use the `.cia` from the release.
 
 ## First setup
 

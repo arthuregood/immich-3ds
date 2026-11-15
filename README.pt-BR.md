@@ -42,9 +42,7 @@ O FBI instala direto do console. Abra **Remote Install → Scan QR Code** e apon
 
 ![QR code com o link direto do arquivo](docs/install-qr.png)
 
-O arquivo está hospedado fora do GitHub, então o link pode expirar; se parar de funcionar, use o `.cia`
-da release acima. Um QR apontando para a release do GitHub não funciona: o TLS do console para no 1.1 e
-o GitHub só aceita 1.2.
+Hospedado fora do GitHub, então o link pode expirar; se expirar, use o `.cia` da release.
 
 ## Primeira configuração
 
