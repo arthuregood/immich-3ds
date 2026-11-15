@@ -11,6 +11,7 @@
 #include "thumb.h"
 #include "font.h"
 #include "i18n.h"
+#include "pairing.h"
 
 #define TOP_W 400
 #define TOP_H 240
@@ -35,7 +36,8 @@
 
 #define MAX_PHOTOS 512
 
-enum { ST_GALLERY, ST_MENU, ST_UPLOAD, ST_DONE };
+enum { ST_GALLERY, ST_MENU, ST_UPLOAD, ST_DONE, ST_PAIRING };
+enum { MENU_PHOTO, MENU_SETTINGS };
 
 static Config cfg;
 static Photo photos[MAX_PHOTOS];
@@ -43,6 +45,7 @@ static int nphotos;
 static int cursor, page;
 static int state = ST_GALLERY;
 static int menu_sel;
+static int menu_kind;
 static bool sent[MAX_PHOTOS];      // ja enviada nesta sessao (so para marcar na grade)
 static bool dirty = true;
 
@@ -160,14 +163,29 @@ static void draw_grid(uint8_t *fb, int bpp)
     }
 }
 
+// Itens do menu: depende de onde ele foi aberto (foto ou configuracao).
+static void menu_items(const char **items, char *b1, size_t b1sz, char *b2, size_t b2sz)
+{
+    if (menu_kind == MENU_SETTINGS) {
+        items[0] = tr(S_SET_BROWSER);
+        items[1] = tr(S_SET_KEYBOARD);
+        items[2] = tr(S_CANCEL);
+        return;
+    }
+    char day[16];
+    day_of(nphotos ? &photos[cursor] : NULL, day, sizeof day);
+    snprintf(b1, b1sz, "%s", tr(S_SEND_THIS));
+    snprintf(b2, b2sz, tr(S_SEND_DAY), nphotos ? count_day(cursor) : 0, day);
+    items[0] = b1;
+    items[1] = b2;
+    items[2] = tr(S_CANCEL);
+}
+
 static void draw_menu(uint8_t *fb, int bpp)
 {
-    char item1[40], item2[48], day[16];
-    day_of(&photos[cursor], day, sizeof day);
-    snprintf(item1, sizeof item1, "%s", tr(S_SEND_THIS));
-    snprintf(item2, sizeof item2, tr(S_SEND_DAY), count_day(cursor), day);
-
-    const char *items[3] = { item1, item2, tr(S_CANCEL) };
+    char item1[40], item2[64];
+    const char *items[3];
+    menu_items(items, item1, sizeof item1, item2, sizeof item2);
     int bx = 18, by = 62, bw = BOT_W - 36, bh = 26 + 3 * 20;
 
     thumb_fill(fb, bpp, bx - 2, by - 2, bw + 4, bh + 4, BOT_W, BOT_H, 0xFF, 0xFF, 0xFF);
@@ -265,6 +283,35 @@ static void draw_result_popup(void)
     font_draw(fb, bpp, bx + 10, by + 48, tr(S_BACK), TOP_W, TOP_H, 0x90, 0x90, 0xA8);
 }
 
+// Painel do servidor de pareamento (tela de cima).
+static void draw_pairing(void)
+{
+    int bpp = bpp_of(gfxGetScreenFormat(GFX_TOP));
+    uint8_t *fb = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+    if (!fb) return;
+
+    int bx = 16, by = 56, bw = TOP_W - 32, bh = 128;
+    thumb_fill(fb, bpp, bx, by, bw, bh, TOP_W, TOP_H, 0x18, 0x18, 0x26);
+    thumb_border(fb, bpp, bx, by, bw, bh, 1, TOP_W, TOP_H, 0x90, 0x90, 0xB0);
+
+    const char *t1 = tr(S_PAIR_TITLE);
+    font_draw(fb, bpp, bx + (bw - font_width(t1)) / 2, by + 12, t1, TOP_W, TOP_H, 0xF0, 0xF0, 0xF8);
+
+    if (pairing_active()) {
+        const char *url = pairing_url();
+        font_draw(fb, bpp, bx + (bw - font_width(url)) / 2, by + 40, url, TOP_W, TOP_H, 0xF9, 0x44, 0x2C);
+        const char *t2 = tr(S_PAIR_HINT);
+        font_draw(fb, bpp, bx + (bw - font_width(t2)) / 2, by + 66, t2, TOP_W, TOP_H, 0xA0, 0xA0, 0xB8);
+        const char *t3 = tr(S_PAIR_WAIT);
+        font_draw(fb, bpp, bx + (bw - font_width(t3)) / 2, by + 96, t3, TOP_W, TOP_H, 0x80, 0x80, 0x98);
+    } else {
+        const char *t2 = tr(S_PAIR_FAIL);
+        font_draw(fb, bpp, bx + (bw - font_width(t2)) / 2, by + 56, t2, TOP_W, TOP_H, 0xE0, 0x70, 0x60);
+        const char *t3 = tr(S_BACK);
+        font_draw(fb, bpp, bx + (bw - font_width(t3)) / 2, by + 92, t3, TOP_W, TOP_H, 0x80, 0x80, 0x98);
+    }
+}
+
 static void render(void)
 {
     draw_top();
@@ -272,6 +319,7 @@ static void render(void)
 
     if (state == ST_UPLOAD) draw_upload_popup();
     if (state == ST_DONE)   draw_result_popup();
+    if (state == ST_PAIRING) draw_pairing();
 
     gfxFlushBuffers();
     gfxSwapBuffers();
@@ -347,6 +395,28 @@ static void check_status(void)
     dirty = true;
 }
 
+// Executa o item escolhido no menu (foto ou configuracao).
+static void menu_activate(void)
+{
+    state = ST_GALLERY;
+    dirty = true;
+
+    if (menu_kind == MENU_SETTINGS) {
+        if (menu_sel == 0) {
+            pairing_start();
+            state = ST_PAIRING;
+        } else if (menu_sel == 1) {
+            config_setup(&cfg);
+            i18n_init();
+            check_status();
+        }
+        return;
+    }
+
+    if (menu_sel == 0) send_current();
+    else if (menu_sel == 1) send_day();
+}
+
 static void clamp_page(void)
 {
     if (cursor < page) page = (cursor / PAGE) * PAGE;
@@ -366,10 +436,7 @@ static void handle_touch(void)
             int y = by + 22 + i * 20;
             if (t.px >= bx && t.px < bx + (BOT_W - 36) && t.py >= y - 2 && t.py < y + 14) {
                 menu_sel = i;
-                if (i == 0) { state = ST_GALLERY; send_current(); }
-                else if (i == 1) { state = ST_GALLERY; send_day(); }
-                else state = ST_GALLERY;
-                dirty = true;
+                menu_activate();
                 return;
             }
         }
@@ -408,17 +475,22 @@ int main(int argc, char **argv)
     nphotos = dcim_scan(photos, MAX_PHOTOS);
     for (int i = 0; i < PAGE; i++) thumb_key[i] = -1;
 
-    render();        // mostra a galeria antes de ir na rede
-    check_status();
+    if (!cfg.server[0] || !cfg.apikey[0]) {
+        if (pairing_start()) state = ST_PAIRING;    // primeira execucao: configura pelo navegador
+    }
+
+    render();        // mostra a tela antes de ir na rede
+    if (state != ST_PAIRING) check_status();
 
     while (aptMainLoop()) {
         hidScanInput();
         u32 k = hidKeysDown();
 
         if (k & KEY_SELECT) {
-            config_setup(&cfg);
-            i18n_init();
-            check_status();
+            state = ST_MENU;
+            menu_kind = MENU_SETTINGS;
+            menu_sel = 0;
+            dirty = true;
         }
 
         if (state == ST_GALLERY) {
@@ -428,20 +500,28 @@ int main(int argc, char **argv)
                 if ((k & KEY_LEFT) && cursor > 0) { cursor--; dirty = true; }
                 if ((k & KEY_DOWN) && cursor + COLS < nphotos) { cursor += COLS; dirty = true; }
                 if ((k & KEY_UP) && cursor - COLS >= 0) { cursor -= COLS; dirty = true; }
-                if (k & KEY_A) { state = ST_MENU; menu_sel = 0; dirty = true; }
+                if (k & KEY_A) { state = ST_MENU; menu_kind = MENU_PHOTO; menu_sel = 0; dirty = true; }
             }
             clamp_page();
         } else if (state == ST_MENU) {
             if (k & KEY_B) { state = ST_GALLERY; dirty = true; }
             if (k & KEY_DOWN) { menu_sel = (menu_sel + 1) % 3; dirty = true; }
             if (k & KEY_UP) { menu_sel = (menu_sel + 2) % 3; dirty = true; }
-            if (k & KEY_A) {
-                if (menu_sel == 0) { state = ST_GALLERY; send_current(); }
-                else if (menu_sel == 1) { state = ST_GALLERY; send_day(); }
-                else { state = ST_GALLERY; dirty = true; }
-            }
+            if (k & KEY_A) menu_activate();
         } else if (state == ST_DONE) {
             if (k & (KEY_A | KEY_B)) { state = ST_GALLERY; dirty = true; }
+        } else if (state == ST_PAIRING) {
+            if (k & KEY_B) { pairing_stop(); state = ST_GALLERY; dirty = true; }
+            Config tmp = cfg;
+            if (pairing_poll(&tmp) == 1) {
+                cfg = tmp;
+                config_save(&cfg);
+                pairing_stop();
+                state = ST_GALLERY;
+                dirty = true;
+                render();
+                check_status();
+            }
         }
 
         if (k & KEY_TOUCH) handle_touch();

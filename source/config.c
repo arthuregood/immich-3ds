@@ -8,6 +8,7 @@
 
 #define CONFIG_DIR  "sdmc:/immich-3ds"
 #define CONFIG_FILE "sdmc:/immich-3ds/config.txt"
+#define ENV_FILE    "sdmc:/immich-3ds/.env"
 #define CA_FILE     "sdmc:/immich-3ds/ca.pem"
 
 static void trim(char *s)
@@ -43,6 +44,7 @@ bool config_load(Config *c)
     config_defaults(c);
 
     FILE *f = fopen(CONFIG_FILE, "r");
+    if (!f) f = fopen(ENV_FILE, "r");      // aceita .env tambem
     if (f) {
         char line[420];
         while (fgets(line, sizeof line, f)) {
@@ -53,9 +55,12 @@ bool config_load(Config *c)
             *eq = 0;
             char *k = line, *v = eq + 1;
             trim(k); trim(v);
-            if      (!strcasecmp(k, "server")) snprintf(c->server, sizeof c->server, "%s", v);
-            else if (!strcasecmp(k, "apikey")) snprintf(c->apikey, sizeof c->apikey, "%s", v);
-            else if (!strcasecmp(k, "tz"))     snprintf(c->tz,     sizeof c->tz,     "%s", v);
+            if      (!strcasecmp(k, "server")  || !strcasecmp(k, "immich_server"))
+                snprintf(c->server, sizeof c->server, "%s", v);
+            else if (!strcasecmp(k, "apikey")  || !strcasecmp(k, "immich_api_key"))
+                snprintf(c->apikey, sizeof c->apikey, "%s", v);
+            else if (!strcasecmp(k, "tz")      || !strcasecmp(k, "immich_tz"))
+                snprintf(c->tz, sizeof c->tz, "%s", v);
         }
         fclose(f);
     }

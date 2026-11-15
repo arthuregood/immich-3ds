@@ -70,43 +70,50 @@ makerom -f cia -o immich-3ds.cia -elf immich-3ds.elf -icon immich-3ds.smdh \
 
 ## Configurar
 
-### Opção A — `.env` no build (sem digitar nada no 3DS)
+Tres formas, da mais confortavel para a mais manual. A primeira vez que o app abre sem
+configuracao, ele ja cai no modo navegador.
 
-```sh
-cp .env.example .env
-$EDITOR .env        # IMMICH_SERVER, IMMICH_API_KEY, IMMICH_TZ
-./build.sh          # os valores entram compilados no binário
+### 1. Pelo navegador (sem digitar nada no console)
+
+Se o app nao achar configuracao, ele sobe um servidor HTTP e mostra o endereco na tela de
+cima:
+
+```
+Set up in your browser
+http://192.168.1.254:8080
 ```
 
-O cabeçalho da tela mostra `(build)` quando a config veio daí. O `.env` está no `.gitignore`.
+Abra esse endereco no celular ou no PC (mesma rede), preencha servidor, API key e fuso, e
+toque em **Enviar pro 3DS**. O app salva em `sdmc:/immich-3ds/config.txt`, testa a conexao
+e volta para a galeria.
 
-⚠️ A chave fica **dentro** do `.cia` gerado: use uma API key dedicada a este app e não distribua esse binário.
+O mesmo modo existe depois de configurado: **SELECT → Setup in browser**.
 
-### Opção B — direto no 3DS
+### 2. Arquivo no cartao SD
 
-Sem `.env`, o app abre pedindo os dados. Aperte **SELECT** e preencha pelo teclado do 3DS:
+Crie `sdmc:/immich-3ds/config.txt` (ou `.env`, os dois funcionam) com:
 
-| Campo | Exemplo |
-|---|---|
-| Servidor | `http://192.168.0.10:2283` |
-| API key | criada em *Account Settings → API Keys* no Immich |
-| Fuso horário | `-03:00` |
+```
+server=http://192.168.0.10:2283
+apikey=sua_api_key
+tz=-03:00
+lang=pt
+```
 
-Fica salvo em `sdmc:/immich-3ds/config.txt`, que tem prioridade sobre o `.env`: é assim que você troca de servidor sem recompilar.
+Os nomes `IMMICH_SERVER`, `IMMICH_API_KEY` e `IMMICH_TZ` tambem valem, se voce preferir o
+estilo `.env`. Só `server` e `apikey` sao obrigatorios. `lang` (`pt`/`en`) forca o idioma.
 
-### HTTPS
+### 3. Teclado do 3DS
 
-O app fala TLS 1.2 com o mbedtls embarcado — não usa a pilha TLS do sistema (que para no TLS 1.1).
-
-- **HTTP na rede local**: funciona sem configurar nada.
-- **HTTPS**: coloque a CA em `sdmc:/immich-3ds/ca.pem` (ex: `ISRG Root X1` se o seu Immich usa Let's Encrypt). Se o arquivo não existir, o app conecta **sem verificar o certificado** e mostra um aviso amarelo na tela.
+**SELECT → Setup with 3DS keyboard**. A key tem ~60 caracteres, entao isso e util para
+corrigir um campo, nao para a primeira configuracao.
 
 ## Teclas
 
 | Tecla | Ação |
 |---|---|
 | D-pad ↑ ↓ ← → | navegar na lista |
-| A | marcar / desmarcar (a grade mostra as marcadas) |
+| A / toque | abrir o menu (enviar / configurar) |
 | Y | marcar todas |
 | X | limpar marcação |
 | START | enviar marcadas |
@@ -120,12 +127,6 @@ O app fala TLS 1.2 com o mbedtls embarcado — não usa a pilha TLS do sistema (
 - `.MPO` (foto 3D) sobe como JPEG: o Immich mostra o primeiro frame e preserva o original.
 - TLS 1.2 é o teto do mbedtls 2.x — um servidor exigindo só TLS 1.3 não vai conectar.
 - A API key fica em texto plano no SD (ou compilada no binário, se você usou `.env`). Use uma key dedicada a este app, para poder revogar sem afetar os outros clientes.
-
-## Idioma
-
-A interface sai em portugues se o 3DS estiver configurado em portugues (`CFGU_GetSystemLanguage`);
-qualquer outro idioma usa ingles. Para forcar, adicione `lang=pt` ou `lang=en` em
-`sdmc:/immich-3ds/config.txt`.
 
 ## Icone e banner
 

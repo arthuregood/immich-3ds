@@ -20,6 +20,12 @@ typedef enum {
     S_CHECKING,
     S_ONLINE,        // "%s" = versao do servidor
     S_OFFLINE,
+    S_PAIR_TITLE,
+    S_PAIR_HINT,
+    S_PAIR_WAIT,
+    S_PAIR_FAIL,
+    S_SET_BROWSER,
+    S_SET_KEYBOARD,
     S_COUNT
 } StrId;
 

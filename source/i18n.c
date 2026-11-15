@@ -26,6 +26,12 @@ static const char *tbl[2][S_COUNT] = {
         "checking...",
         "online %s",
         "offline",
+        "Set up in your browser",
+        "Open this address on your phone or PC:",
+        "waiting for connection...",
+        "could not open the port (wifi off?)",
+        "Setup in browser",
+        "Setup with 3DS keyboard",
     },
     /* portugues */ {
         "Enviar esta foto",
@@ -45,6 +51,12 @@ static const char *tbl[2][S_COUNT] = {
         "checando...",
         "online %s",
         "offline",
+        "Configure pelo navegador",
+        "Abra este endereco no celular ou PC:",
+        "aguardando conexao...",
+        "nao consegui abrir a porta (wifi off?)",
+        "Configurar pelo navegador",
+        "Configurar no teclado",
     },
 };
 
