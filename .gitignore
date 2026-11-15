@@ -7,8 +7,9 @@ build/
 *.map
 *.d
 
-# nada de credenciais no repo
-.env
+# nada de credenciais no repo (pega .env, .env.bk, .env.local...)
+.env*
+!.env.example
 source/config_build.h
 *.local
 tests/data/
