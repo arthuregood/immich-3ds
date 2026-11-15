@@ -10,9 +10,9 @@ Uploads the photos on your 3DS SD card to [Immich](https://immich.app). It runs 
 
 ## How it works
 
-The app lists what is in `sdmc:/DCIM`, grouped by day, newest first. You can upload one photo or everything from the same date.
+The app lists what is in `sdmc:/DCIM`, grouped by day, newest first. Pick a photo or a whole day and it uploads to Immich. D-pad moves, A opens the menu, SELECT opens the setup, B quits.
 
-Dates come from the JPEG's EXIF, not from the file timestamp. 3DS clocks drift; the date inside the photo does not.
+Dates come from the JPEG's EXIF, not from the file timestamp. 3DS clocks drift; the date inside the photo does not. The footer shows the server and whether it answered.
 
 | Gallery | Actions |
 |---|---|
@@ -38,8 +38,7 @@ To update later, install the newer `.cia` the same way. It replaces the app and 
 
 ### Without the SD card
 
-FBI can install straight from the console. Open **Remote Install → Scan QR Code** and point the camera
-at this:
+FBI can install straight from the console. Open **Remote Install → Scan QR Code** and point the camera at this:
 
 ![QR code with the direct download link](docs/install-qr.png)
 
@@ -66,7 +65,7 @@ IMMICH_TZ=-03:00          # optional, defaults to -03:00; your offset from UTC
 lang=en                   # optional; without it the app follows the console language
 ```
 
-Only the server and the key are required. Both routes are also under **SELECT → setup**, together with the 3DS keyboard for when you just need to fix one field.
+Only the server and the key are required. Both routes are also under **SELECT → setup**, together with the 3DS keyboard.
 
 ## If it does not work
 
@@ -74,17 +73,6 @@ Only the server and the key are required. Both routes are also under **SELECT �
 - **The footer says `offline`.** Wi-Fi is up but Immich did not answer. Test the same URL in your phone's browser.
 - **`could not open the port (wifi off?)`.** Port 8080 is taken or Wi-Fi dropped. Try **SELECT → setup → browser** again.
 - **`no photos in sdmc:/DCIM`.** The photos are not where the app looks; see the folder rule below.
-
-## Controls
-
-| Input | Action |
-|---|---|
-| D-pad | move through the photos |
-| A / touch | open the menu |
-| SELECT | setup |
-| B | exit |
-
-The footer shows the server and whether it answered: `online` plus the server version, or `offline`. It checks on boot and after you save the settings.
 
 ## Good to know
 
